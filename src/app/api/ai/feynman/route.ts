@@ -67,7 +67,7 @@ Produce a JSON report in exactly this format:
 
     const raw = await askClaudeChat(system, [{ role: "user", content: userMsg }], 1024);
 
-    await logUsage(userId, courseId, "feynman_score", 1);
+    await logUsage({ userId, courseId, action: "feynman_score" });
 
     try {
       const match = raw.match(/\{[\s\S]*\}/);
@@ -98,7 +98,7 @@ IMPORTANT: You are a student. Never give away answers. Only probe, clarify, and 
 
     const reply = await askClaudeChat(system, messages, 512);
 
-  await logUsage(userId, courseId, "feynman_chat", 1);
+  await logUsage({ userId, courseId, action: "feynman_chat" });
 
   return NextResponse.json({ reply });
 }

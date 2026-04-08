@@ -34,9 +34,9 @@ export async function POST(req: NextRequest) {
     // Also fetch broader course context for richer answers
     const chunks = await prisma.chunk.findMany({
       where: { courseId },
-      select: { content: true },
+      select: { text: true, title: true, chunkIndex: true },
       take: 15,
-      orderBy: { createdAt: "desc" },
+      orderBy: { chunkIndex: "desc" },
     });
     const courseContext = buildContext(chunks);
 

@@ -71,7 +71,7 @@ export async function askClaudeChat(
     model: "claude-sonnet-4-20250514",
     max_tokens: maxTokens,
     system,
-    messages,
+    messages: messages as any,
   });
 
   return response.content

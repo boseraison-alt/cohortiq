@@ -704,7 +704,7 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
               {/* Generate button */}
               <div className="mt-6">
                 <button
-                  onClick={generatePodcast}
+                  onClick={() => generatePodcast()}
                   className="rounded-xl px-8 py-3 text-sm font-semibold text-bg transition-all hover:opacity-90"
                   style={{ background: color }}
                 >

@@ -90,10 +90,6 @@ Rules:
       userId,
       courseId,
       action: "concept_map",
-      inputTokens: 0,
-      outputTokens: 0,
-      ttsChars: 0,
-      costUsd: 0,
     });
 
     return NextResponse.json(tree);
