@@ -19,6 +19,19 @@ export async function GET() {
   return NextResponse.json(invites);
 }
 
+export async function DELETE(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!(await requireAdmin(session))) {
+    return NextResponse.json({ error: "Admin only" }, { status: 403 });
+  }
+
+  const { id } = await req.json();
+  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+  await prisma.invite.delete({ where: { id } }).catch(() => {});
+  return NextResponse.json({ ok: true });
+}
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!(await requireAdmin(session))) {

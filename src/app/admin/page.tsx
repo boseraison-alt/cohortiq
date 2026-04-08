@@ -711,9 +711,16 @@ function InvitesPanel() {
             <p style={{ fontSize: ".82rem", fontWeight: 500 }}>{inv.email}</p>
             <p style={{ fontSize: ".68rem", color: A.muted }}>Created {new Date(inv.createdAt).toLocaleDateString()}</p>
           </div>
-          {inv.used ? <span style={{ fontSize: ".68rem", background: A.greenBg, color: A.green, padding: "2px 8px", borderRadius: 50, fontWeight: 600 }}>Registered</span>
-            : new Date(inv.expiresAt) < new Date() ? <span style={{ fontSize: ".68rem", background: A.redBg, color: A.red, padding: "2px 8px", borderRadius: 50, fontWeight: 600 }}>Expired</span>
-            : <span style={{ fontSize: ".68rem", background: A.goldBg, color: A.gold, padding: "2px 8px", borderRadius: 50, fontWeight: 600 }}>Pending</span>}
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            {inv.used ? <span style={{ fontSize: ".68rem", background: A.greenBg, color: A.green, padding: "2px 8px", borderRadius: 50, fontWeight: 600 }}>Registered</span>
+              : new Date(inv.expiresAt) < new Date() ? <span style={{ fontSize: ".68rem", background: A.redBg, color: A.red, padding: "2px 8px", borderRadius: 50, fontWeight: 600 }}>Expired</span>
+              : <span style={{ fontSize: ".68rem", background: A.goldBg, color: A.gold, padding: "2px 8px", borderRadius: 50, fontWeight: 600 }}>Pending</span>}
+            <button onClick={async () => {
+              await fetch("/api/admin/invites", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: inv.id }) });
+              loadInvites();
+            }} style={{ fontSize: ".62rem", color: A.muted, background: "none", border: `1px solid ${A.borderMd}`, borderRadius: 6, padding: "2px 8px", cursor: "pointer" }}
+              title="Delete invite">✕</button>
+          </div>
         </div>
       ))}
     </div>
