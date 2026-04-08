@@ -664,7 +664,7 @@ function InvitesPanel() {
   const [invites, setInvites] = useState<any[]>([]);
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<{ url?: string; error?: string } | null>(null);
+  const [result, setResult] = useState<{ url?: string; error?: string; emailSent?: boolean } | null>(null);
 
   const loadInvites = () => { fetch("/api/admin/invites").then((r) => r.json()).then(setInvites).catch(() => {}); };
   useEffect(() => { loadInvites(); }, []);
@@ -675,7 +675,7 @@ function InvitesPanel() {
     try {
       const res = await fetch("/api/admin/invites", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: email.trim() }) });
       const data = await res.json();
-      if (data.registerUrl) { setResult({ url: data.registerUrl }); setEmail(""); loadInvites(); }
+      if (data.registerUrl) { setResult({ url: data.registerUrl, emailSent: data.emailSent }); setEmail(""); loadInvites(); }
       else setResult({ error: data.error });
     } catch { setResult({ error: "Network error" }); }
     setSending(false);
@@ -684,15 +684,17 @@ function InvitesPanel() {
   return (
     <div>
       <Card style={{ marginBottom: 16 }}>
-        <p style={{ fontSize: ".78rem", color: A.muted, marginBottom: 12 }}>Enter an email to generate a registration invite link.</p>
+        <p style={{ fontSize: ".78rem", color: A.muted, marginBottom: 12 }}>Enter an email — they'll receive a registration link automatically.</p>
         <div style={{ display: "flex", gap: 8 }}>
-          <input value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendInvite()} placeholder="user@email.com"
+          <input value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendInvite()} placeholder="member@email.com"
             style={{ flex: 1, border: `1px solid ${A.borderMd}`, borderRadius: 8, padding: "8px 12px", fontSize: ".82rem", fontFamily: A.sans, outline: "none", background: A.bg }} />
-          <Btn label={sending ? "Sending…" : "Create Invite"} bg={A.gold} color="white" border="none" onClick={sendInvite} />
+          <Btn label={sending ? "Sending…" : "Send Invite"} bg={A.gold} color="white" border="none" onClick={sendInvite} />
         </div>
         {result?.url && (
           <div style={{ marginTop: 12, padding: 12, background: A.greenBg, borderRadius: 8 }}>
-            <p style={{ fontSize: ".72rem", color: A.green, fontWeight: 600, marginBottom: 4 }}>Invite created!</p>
+            <p style={{ fontSize: ".72rem", color: A.green, fontWeight: 600, marginBottom: 4 }}>
+              {result.emailSent ? "✉️ Invite email sent!" : "Invite created — email could not be sent, share link manually:"}
+            </p>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <input value={result.url} readOnly style={{ flex: 1, border: `1px solid ${A.border}`, borderRadius: 6, padding: "6px 8px", fontSize: ".72rem", fontFamily: A.mono, background: A.surface }} />
               <Btn label="Copy" bg={A.green + "20"} color={A.green} border="none" onClick={() => navigator.clipboard.writeText(result.url!)} />

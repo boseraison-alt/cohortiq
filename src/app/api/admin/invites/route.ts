@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions, requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { randomBytes } from "crypto";
+import { sendInviteEmail } from "@/lib/email";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -64,9 +65,20 @@ export async function POST(req: NextRequest) {
   const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
   const registerUrl = `${baseUrl}/register?token=${token}`;
 
+  // Send invite email automatically
+  const inviterName = session!.user?.name || session!.user?.email || "Your admin";
+  const emailResult = await sendInviteEmail({
+    to: normalizedEmail,
+    registerUrl,
+    invitedBy: inviterName,
+  });
+
   return NextResponse.json({
     invite,
     registerUrl,
-    message: `Invite created. Share this link with ${normalizedEmail}`,
+    emailSent: emailResult.sent,
+    message: emailResult.sent
+      ? `Invite email sent to ${normalizedEmail}`
+      : `Invite created. Email could not be sent — share the link manually.`,
   });
 }
