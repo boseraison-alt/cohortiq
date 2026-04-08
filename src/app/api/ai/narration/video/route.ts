@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Composite all slides into a single MP4 video
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "videos");
+    const uploadDir = path.join(process.env.VERCEL ? "/tmp" : process.cwd() + "/public", "uploads", "videos");
     await mkdir(uploadDir, { recursive: true });
 
     const safeTopic = (topic || "presentation")

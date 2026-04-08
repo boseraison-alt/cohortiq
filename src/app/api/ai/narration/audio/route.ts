@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     const combined = Buffer.concat(audioBuffers);
 
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "videos");
+    const uploadDir = path.join(process.env.VERCEL ? "/tmp" : process.cwd() + "/public", "uploads", "videos");
     await mkdir(uploadDir, { recursive: true });
 
     const safeTopic = (topic || "narration")

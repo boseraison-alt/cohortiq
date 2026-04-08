@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
         .map((s) => Buffer.from(s.audio, "base64"));
       if (buffers.length) {
         const combined = Buffer.concat(buffers);
-        const uploadDir = path.join(process.cwd(), "public", "uploads", "podcasts");
+        const uploadDir = path.join(process.env.VERCEL ? "/tmp" : process.cwd() + "/public", "uploads", "podcasts");
         await mkdir(uploadDir, { recursive: true });
         const fileName = `podcast_${podcastId}.mp3`;
         await writeFile(path.join(uploadDir, fileName), combined);
