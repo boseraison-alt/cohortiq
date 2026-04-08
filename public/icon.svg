@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Northwestern purple background -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4E2A84"/>
+      <stop offset="100%" style="stop-color:#3a1f64"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#C4A265"/>
+      <stop offset="100%" style="stop-color:#E8C97E"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
+
+  <!-- Subtle top highlight -->
+  <rect width="512" height="120" rx="100" fill="#ffffff" opacity="0.04"/>
+
+  <!-- "CohortIQ" main text -->
+  <text x="256" y="228" text-anchor="middle"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="108" font-weight="bold"
+        fill="url(#gold)" letter-spacing="-2">Cohort</text>
+
+  <text x="256" y="330" text-anchor="middle"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="108" font-weight="bold"
+        fill="#ffffff" letter-spacing="-2">IQ</text>
+
+  <!-- Thin gold divider line -->
+  <rect x="96" y="348" width="320" height="2.5" rx="1.25" fill="url(#gold)" opacity="0.7"/>
+
+  <!-- "KELLOGG · 144" subtitle -->
+  <text x="256" y="400" text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="34" font-weight="600"
+        fill="#ffffff" opacity="0.75" letter-spacing="6">KELLOGG · 144</text>
+</svg>

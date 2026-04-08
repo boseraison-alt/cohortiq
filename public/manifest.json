@@ -1,0 +1,49 @@
+{
+  "name": "CohortIQ — Kellogg EMBA",
+  "short_name": "CohortIQ",
+  "description": "AI-powered study assistant for Kellogg EMBA 144",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1a1814",
+  "theme_color": "#C9956B",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Podcast",
+      "short_name": "Podcast",
+      "description": "Listen to your study podcasts",
+      "url": "/dashboard?tab=podcast",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Master Mind",
+      "short_name": "Brain",
+      "description": "Cross-course AI search",
+      "url": "/dashboard?tab=brain",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}
