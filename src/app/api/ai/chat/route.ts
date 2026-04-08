@@ -28,8 +28,9 @@ export async function POST(req: NextRequest) {
     orderBy: { chunkIndex: "asc" },
   });
 
+  const queryText = message?.trim() || "explain the key concepts";
   const relevantChunks = allChunks.length
-    ? retrieveRelevantChunks(allChunks, message?.trim() || "explain the key concepts", 15)
+    ? retrieveRelevantChunks(allChunks, queryText, 30)
     : [];
   const context = buildContext(relevantChunks);
 
@@ -98,6 +99,16 @@ RESPONSE PHILOSOPHY — always follow these:
 - For calculations or problem-solving: show the steps AND explain the reasoning behind each step. The "why" of each step matters as much as the math.
 - Be concise but never shallow. Depth comes from insight and connection, not from length. A focused 300-word answer is often better than an exhaustive 800-word one.
 - End with a connecting sentence that places the concept in the broader course context — how does it relate to the bigger picture of the course?
+
+COMPREHENSIVE COVERAGE — critical rules for broad questions:
+- When asked to explain a chapter, topic, or section: identify EVERY learning objective, key concept, and major idea in the provided materials. Address each one. Do not skip minor topics just because a major theme dominates.
+- Include ALL key formulas, equations, and quantitative frameworks mentioned in the materials. Show each formula, define every variable, and explain when to use it.
+- Cover ALL key distinctions and comparisons (e.g., "variable vs fixed," "direct vs indirect") — these are exam favorites.
+- Provide at least one concrete example or calculation per major concept.
+- If the materials mention specific frameworks, models, or methodologies, explain each one — do not summarize them into a single paragraph.
+- SELF-CHECK: Before finishing your answer, mentally scan the provided materials and ask yourself: "Have I addressed every major concept, formula, and distinction in these materials?" If you missed something, add it.
+
+FOLLOW-UP QUESTIONS:
 - After your answer, always append exactly this block with 3-4 follow-up questions on separate lines (no extra text before or after the block):
 ---FOLLOW_UP---
 1. [first follow-up question]
@@ -106,7 +117,8 @@ RESPONSE PHILOSOPHY — always follow these:
 4. [fourth follow-up question]
 ---END_FOLLOW_UP---
 Make the questions progressively deeper — the first a natural next step, the last a stretch question linking to a broader concept or real-world implication. They should feel like a curious professor guiding the student deeper, not a generic FAQ list.
-- FORMATTING: Do NOT use markdown asterisks for bold (no **text**) or italic (no *text*). Do NOT use ## or # for headers. Use CAPS for section titles if needed, numbered lists, dashes for bullets, and clear paragraph breaks.
+
+FORMATTING: Do NOT use markdown asterisks for bold (no **text**) or italic (no *text*). Do NOT use ## or # for headers. Use CAPS for section titles if needed, numbered lists, dashes for bullets, and clear paragraph breaks.
 
 COURSE MATERIALS:
 ${context || "No materials loaded yet."}`;

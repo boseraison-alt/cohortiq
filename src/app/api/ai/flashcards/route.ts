@@ -31,6 +31,14 @@ export async function POST(req: NextRequest) {
   const prefs = await getUserPrefsPrompt((session.user as any).id);
   const system = `${prefs}Generate EXACTLY ${numCards} flashcards for "${courseName}".${topicFocus}
 
+FLASHCARD RULES:
+- Cover EVERY learning objective, formula, key distinction, and important concept in the materials — not just the main themes.
+- Include formula cards: front = "What is the formula for X?", back = the formula with variable definitions.
+- Include distinction cards: front = "What is the difference between X and Y?", back = clear comparison.
+- Include application cards: front = "When would you use X?", back = practical scenario.
+- Each card should test a single, specific concept — not a broad topic.
+- Back of card should be a complete, self-contained explanation (not just a one-word answer).
+
 MATERIALS:
 ${ctx}
 

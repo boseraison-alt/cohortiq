@@ -69,12 +69,22 @@ export async function POST(req: NextRequest) {
   const prefs = await getUserPrefsPrompt((session.user as any).id);
   const system = `${prefs}Generate EXACTLY ${numQuestions} ${typeInstr} questions for "${courseName}".${weakInstr}${topicInstr}
 
+QUESTION GENERATION RULES:
+- Cover ALL learning objectives and major concepts in the materials — do not cluster questions around a single theme.
+- Include at least one question per major topic/section in the provided materials.
+- Test formulas and calculations: give numerical problems that require applying formulas from the materials.
+- Test distinctions: "What is the difference between X and Y?" or "Which of the following best describes X vs Y?"
+- Test application: present a real-world scenario and ask which framework/concept applies.
+- For MCQ: all four options must be plausible — no obviously wrong distractors.
+- Explanations must reference the course materials specifically.
+- Make questions progressively harder: start with recall, move to application, end with analysis/synthesis.
+
 MATERIALS:
 ${ctx}
 
 Respond in EXACT JSON (no markdown, no backticks):
 [{"q":"question","type":"mcq|short|essay","topic":"topic from materials","options":["A","B","C","D"],"answer":"model answer","explanation":"why, referencing materials"}]
-For non-MCQ omit "options". Make questions progressively harder.`;
+For non-MCQ omit "options".`;
 
   const raw = await askClaude(system, `Generate ${numQuestions} practice questions.`);
   const questions = JSON.parse(raw.replace(/```json|```/g, "").trim());
