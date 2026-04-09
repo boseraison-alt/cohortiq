@@ -4,6 +4,7 @@ import { authOptions, requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { unlink } from "fs/promises";
 import path from "path";
+import { getUploadDir } from "@/lib/uploads";
 
 export async function DELETE(
   req: NextRequest,
@@ -20,10 +21,14 @@ export async function DELETE(
   if (!video) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // Delete uploaded file from disk if applicable
-  if (video.sourceType === "file" && video.url.startsWith("/uploads/")) {
+  if (video.url && video.url !== "slides-only" && !video.url.startsWith("http")) {
     try {
-      const filePath = path.join(process.cwd(), "public", video.url);
-      await unlink(filePath);
+      // Extract subfolder and filename from URL like /uploads/videos/file.mp4 or /api/uploads/videos/file.mp4
+      const match = video.url.match(/\/(videos|podcasts)\/([^/]+)$/);
+      if (match) {
+        const filePath = path.join(getUploadDir(match[1] as "videos" | "podcasts"), match[2]);
+        await unlink(filePath);
+      }
     } catch {
       // File may already be gone — that's fine
     }

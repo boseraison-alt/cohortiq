@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { writeFile, mkdir } from "fs/promises";
+import { getUploadDir, getUploadUrl } from "@/lib/uploads";
 import path from "path";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadDir = path.join(process.env.VERCEL ? "/tmp" : process.cwd() + "/public", "uploads", "videos");
+    const uploadDir = getUploadDir("videos");
     await mkdir(uploadDir, { recursive: true });
 
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         courseId: params.id,
         title: title || file.name.replace(/\.[^.]+$/, ""),
         description,
-        url: `/uploads/videos/${uniqueName}`,
+        url: getUploadUrl("videos", uniqueName),
         sourceType: "file",
         fileName: file.name,
         fileSize: file.size,

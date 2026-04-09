@@ -5,6 +5,7 @@ import { logUsage } from "@/lib/usage";
 import { prisma } from "@/lib/db";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { getUploadDir, getUploadUrl } from "@/lib/uploads";
 import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
@@ -124,11 +125,11 @@ export async function POST(req: NextRequest) {
         .map((s) => Buffer.from(s.audio, "base64"));
       if (buffers.length) {
         const combined = Buffer.concat(buffers);
-        const uploadDir = path.join(process.env.VERCEL ? "/tmp" : process.cwd() + "/public", "uploads", "podcasts");
+        const uploadDir = getUploadDir("podcasts");
         await mkdir(uploadDir, { recursive: true });
         const fileName = `podcast_${podcastId}.mp3`;
         await writeFile(path.join(uploadDir, fileName), combined);
-        audioUrl = `/uploads/podcasts/${fileName}`;
+        audioUrl = getUploadUrl("podcasts", fileName);
         await prisma.podcast.update({
           where: { id: podcastId },
           data: { audioUrl },

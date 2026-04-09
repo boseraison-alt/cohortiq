@@ -6,6 +6,7 @@ import { logUsage } from "@/lib/usage";
 import { generateSpeech, splitIntoChunks } from "@/lib/tts";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { getUploadDir, getUploadUrl } from "@/lib/uploads";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
 
     const combined = Buffer.concat(audioBuffers);
 
-    const uploadDir = path.join(process.env.VERCEL ? "/tmp" : process.cwd() + "/public", "uploads", "videos");
+    const uploadDir = getUploadDir("videos");
     await mkdir(uploadDir, { recursive: true });
 
     const safeTopic = (topic || "narration")
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
         courseId,
         title: `Narration: ${topic || "Presentation"}`,
         description: `AI-generated ${duration}-min narrated presentation`,
-        url: `/uploads/videos/${fileName}`,
+        url: getUploadUrl("videos", fileName),
         sourceType: "narration",
         fileName,
         fileSize: combined.length,
