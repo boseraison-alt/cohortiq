@@ -158,15 +158,25 @@ export function buildSlideSvg(
   </svg>`;
 }
 
-// Render SVG string to PNG buffer using resvg-js (handles fonts reliably on Linux)
+// Render SVG string to PNG buffer using resvg-js with bundled DejaVu fonts.
+// Fonts are committed to assets/fonts/ so rendering works on ANY platform
+// (no system font dependency — works on Railway, Vercel, local dev, etc.)
 export async function renderSlideToPng(svgString: string): Promise<Buffer> {
   const { Resvg } = await import("@resvg/resvg-js");
+  const { join } = await import("path");
+
+  const fontsDir = join(process.cwd(), "assets", "fonts");
+
   const resvg = new Resvg(svgString, {
     fitTo: { mode: "width" as const, value: W },
     font: {
-      loadSystemFonts: true,
-      // Explicitly scan apt-installed font dirs on Railway (Linux)
-      fontDirs: ["/usr/share/fonts", "/usr/local/share/fonts"],
+      loadSystemFonts: false,
+      fontFiles: [
+        join(fontsDir, "DejaVuSans.ttf"),
+        join(fontsDir, "DejaVuSans-Bold.ttf"),
+        join(fontsDir, "DejaVuSerif-Bold.ttf"),
+        join(fontsDir, "DejaVuSansMono.ttf"),
+      ],
       defaultFontFamily: "DejaVu Sans",
       sansSerifFamily: "DejaVu Sans",
       serifFamily: "DejaVu Serif",
