@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { askClaudeChat, type ClaudeMessage } from "@/lib/claude";
-import { retrieveRelevantChunks, buildContext } from "@/lib/chunks";
+import { retrieveRelevantChunks, buildContext, isBroadQuery } from "@/lib/chunks";
 import { logUsage } from "@/lib/usage";
 import { getUserPrefsPrompt } from "@/lib/preferences";
 
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const userId = (session.user as any).id;
-  const { courseId, sessionId, message, devilsAdvocate, imageBase64, imageMediaType } = await req.json();
+  const { courseId, sessionId, message, devilsAdvocate, imageBase64, imageMediaType, answerMode = "auto" } = await req.json();
 
   if (!courseId || (!message?.trim() && !imageBase64)) {
     return NextResponse.json({ error: "courseId and message or image required" }, { status: 400 });
@@ -100,13 +100,17 @@ RESPONSE PHILOSOPHY — always follow these:
 - Be concise but never shallow. Depth comes from insight and connection, not from length. A focused 300-word answer is often better than an exhaustive 800-word one.
 - End with a connecting sentence that places the concept in the broader course context — how does it relate to the bigger picture of the course?
 
-COMPREHENSIVE COVERAGE — critical rules for broad questions:
-- When asked to explain a chapter, topic, or section: identify EVERY learning objective, key concept, and major idea in the provided materials. Address each one. Do not skip minor topics just because a major theme dominates.
-- Include ALL key formulas, equations, and quantitative frameworks mentioned in the materials. Show each formula, define every variable, and explain when to use it.
-- Cover ALL key distinctions and comparisons (e.g., "variable vs fixed," "direct vs indirect") — these are exam favorites.
-- Provide at least one concrete example or calculation per major concept.
-- If the materials mention specific frameworks, models, or methodologies, explain each one — do not summarize them into a single paragraph.
-- SELF-CHECK: Before finishing your answer, mentally scan the provided materials and ask yourself: "Have I addressed every major concept, formula, and distinction in these materials?" If you missed something, add it.
+COMPREHENSIVE COVERAGE — mandatory rules when asked to explain a chapter or topic:
+1. Identify EVERY learning objective in the source material. Do not skip any. Structure your response to address each one in order.
+2. For each concept, provide three things: a clear definition, why it matters for managerial decisions, and at least one concrete example from the source material.
+3. Include ALL key formulas with clear labels so they can be used for exam review (e.g., "Prime Cost = Direct Material + Direct Labor"). Define every variable.
+4. Include COMPARISON TABLES where the source material contrasts concepts (e.g., variable vs. fixed cost behavior, direct vs. indirect costs, product vs. period costs). Present these as structured comparisons, not prose.
+5. Cover economic cost concepts thoroughly when present — opportunity costs, sunk costs, differential costs, marginal costs, and average costs. These are high-value exam topics.
+6. Include process/classification frameworks when present — such as manufacturing process types (job shop, batch, assembly line, continuous flow) and cost flow schedules (COGM, COGS).
+7. Connect theory to real-world examples from the source material (e.g., specific companies, industries, or scenarios mentioned in the readings). Don't just define — explain WHY the concept changes how a manager would act.
+8. End with a KEY TERMS GLOSSARY and FORMULA SUMMARY section for quick reference.
+9. NEVER sacrifice completeness for brevity. If a chapter has 10 learning objectives, cover all 10. A partial answer is not acceptable.
+10. SELF-CHECK: Before finishing, scan the provided materials and verify you addressed every major concept, formula, distinction, and example. If you missed something, add it.
 
 FOLLOW-UP QUESTIONS:
 - After your answer, always append exactly this block with 3-4 follow-up questions on separate lines (no extra text before or after the block):
@@ -118,7 +122,25 @@ FOLLOW-UP QUESTIONS:
 ---END_FOLLOW_UP---
 Make the questions progressively deeper — the first a natural next step, the last a stretch question linking to a broader concept or real-world implication. They should feel like a curious professor guiding the student deeper, not a generic FAQ list.
 
-FORMATTING: Do NOT use markdown asterisks for bold (no **text**) or italic (no *text*). Do NOT use ## or # for headers. Use CAPS for section titles if needed, numbered lists, dashes for bullets, and clear paragraph breaks.
+${answerMode === "comprehensive" ? `ANSWER MODE: COMPREHENSIVE
+The student has explicitly requested a FULL, COMPREHENSIVE answer. You MUST:
+- Cover EVERY learning objective — do not skip any
+- Include ALL formulas with labeled variables
+- Include comparison tables for contrasting concepts
+- Provide examples for each major concept
+- End with a KEY TERMS GLOSSARY and FORMULA SUMMARY
+- Use as much space as needed — completeness over brevity
+- A partial answer is NOT acceptable
+` : answerMode === "summary" ? `ANSWER MODE: SUMMARY
+The student wants a CONCISE summary only. You MUST:
+- Hit the key takeaways in 3-5 bullet points
+- Include the most important formula(s) if relevant
+- Keep the total answer under 200 words
+- No glossary, no comparison tables, no extended examples
+- Be direct and exam-focused — what would you write on an index card?
+` : `ANSWER MODE: AUTO
+Adapt your depth to the question. Narrow specific questions get focused answers. Broad "explain chapter X" questions get comprehensive coverage with formulas, tables, and glossary.
+`}FORMATTING: Do NOT use markdown asterisks for bold (no **text**) or italic (no *text*). Do NOT use ## or # for headers. Use CAPS for section titles if needed, numbered lists, dashes for bullets, and clear paragraph breaks.
 
 COURSE MATERIALS:
 ${context || "No materials loaded yet."}`;
@@ -144,7 +166,8 @@ ${context || "No materials loaded yet."}`;
       // For podcast requests, give a brief acknowledgment and flag the action
       answer = "Switching to the Podcast tab now and generating your podcast automatically. This will write the script with Claude and then produce the audio — it will be ready to play in a few minutes!";
     } else {
-      const raw = await askClaudeChat(systemPrompt, claudeMessages, 4096);
+      const maxTokens = answerMode === "comprehensive" ? 8192 : answerMode === "summary" ? 1024 : isBroadQuery(queryText) ? 8192 : 4096;
+      const raw = await askClaudeChat(systemPrompt, claudeMessages, maxTokens);
 
       // Extract follow-up questions block before stripping
       const followUpMatch = raw.match(/---FOLLOW_UP---\s*([\s\S]*?)\s*---END_FOLLOW_UP---/);

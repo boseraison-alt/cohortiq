@@ -43,6 +43,7 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
   const { listening: voiceListening, supported: voiceSupported, toggle: toggleVoice, interimTranscript } =
     useVoiceInput({ onTranscript: (t) => setInput((prev) => prev ? prev + " " + t : t) });
   const [devilsAdvocate, setDevilsAdvocate] = useState(false);
+  const [answerMode, setAnswerMode] = useState<"auto" | "comprehensive" | "summary">("auto");
   const [pendingImage, setPendingImage] = useState<PendingImage | null>(null);
   const [imageSubmitState, setImageSubmitState] = useState<"idle" | "submitted" | "error">("idle");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -141,6 +142,7 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
       sessionId: activeSessionId,
       message: q,
       devilsAdvocate,
+      answerMode,
     };
     if (imgToSend) {
       body.imageBase64 = imgToSend.base64;
@@ -190,7 +192,7 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
       fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId, sessionId: activeSessionId, message: q, devilsAdvocate }),
+        body: JSON.stringify({ courseId, sessionId: activeSessionId, message: q, devilsAdvocate, answerMode }),
       })
         .then((r) => r.json())
         .then((data) => {
@@ -430,6 +432,30 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
           >
             📷
           </button>
+
+          {/* Answer mode toggle */}
+          <div className="shrink-0 flex items-center h-9 rounded-xl border overflow-hidden" style={{ borderColor: "var(--color-border-light)" }}>
+            {([
+              { key: "auto", label: "Auto", icon: "⚡" },
+              { key: "comprehensive", label: "Full", icon: "📖" },
+              { key: "summary", label: "Brief", icon: "📝" },
+            ] as const).map((m) => (
+              <button key={m.key}
+                onClick={() => setAnswerMode(m.key)}
+                disabled={busy}
+                title={m.key === "auto" ? "Auto — AI decides depth" : m.key === "comprehensive" ? "Comprehensive — cover every learning objective, formula, and example" : "Summary — concise key takeaways only"}
+                className="flex items-center gap-1 px-2 h-full text-[10px] font-semibold transition-all"
+                style={{
+                  background: answerMode === m.key ? color + "20" : "transparent",
+                  color: answerMode === m.key ? color : "var(--color-muted)",
+                  borderRight: m.key !== "summary" ? "1px solid var(--color-border-light)" : "none",
+                }}
+              >
+                <span>{m.icon}</span>
+                <span className="hidden sm:inline">{m.label}</span>
+              </button>
+            ))}
+          </div>
 
           {/* Devil's Advocate toggle */}
           <button
