@@ -1,0 +1,6 @@
+[phases.setup]
+# Install fonts so that Sharp/librsvg can render SVG text in AI video slides
+nixPkgs = ["dejavu_fonts", "freetype", "fontconfig"]
+
+[phases.build]
+cmds = ["fc-cache -fv", "npm run build"]

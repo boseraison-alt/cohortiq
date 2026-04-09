@@ -58,7 +58,7 @@ export function buildSlideSvg(
       (line, i) =>
         `<text x="960" y="${titleStartY + i * titleLineHeight}" text-anchor="middle" ` +
         `fill="${accentColor}" font-size="50" font-weight="bold" ` +
-        `font-family="Georgia, 'Segoe UI', serif">${esc(line)}</text>`
+        `font-family="serif">${esc(line)}</text>`
     )
     .join("\n    ");
 
@@ -97,7 +97,7 @@ export function buildSlideSvg(
       bulletsSvg +=
         `<text x="178" y="${cursorY + li * bulletLineHeight}" ` +
         `fill="#E4DED4" font-size="${bulletFontSize}" ` +
-        `font-family="'Segoe UI', Arial, sans-serif">${esc(lines[li])}</text>\n    `;
+        `font-family="sans-serif">${esc(lines[li])}</text>\n    `;
     }
     cursorY += lines.length * bulletLineHeight + bulletSpacing;
   }
@@ -118,7 +118,7 @@ export function buildSlideSvg(
     // Label
     formulasSvg +=
       `<text x="${formulaX}" y="${formulaY}" fill="${accentColor}" font-size="18" ` +
-      `font-weight="bold" font-family="'Segoe UI', Arial, sans-serif" ` +
+      `font-weight="bold" font-family="sans-serif" ` +
       `letter-spacing="2">FORMULAS &amp; CALCULATIONS</text>\n    `;
     formulaY += 40;
 
@@ -127,7 +127,7 @@ export function buildSlideSvg(
       for (const fLine of fLines) {
         formulasSvg +=
           `<text x="${formulaX + 10}" y="${formulaY}" fill="#8ECAE6" font-size="26" ` +
-          `font-family="'Consolas', 'Courier New', monospace">${esc(fLine)}</text>\n    `;
+          `font-family="monospace">${esc(fLine)}</text>\n    `;
         formulaY += 38;
       }
       formulaY += 18; // gap between formulas
@@ -137,9 +137,9 @@ export function buildSlideSvg(
   // ── Footer ──
   const footerSvg =
     `<text x="120" y="1035" fill="#555B66" font-size="22" ` +
-    `font-family="'Segoe UI', Arial, sans-serif">${esc(courseName)}</text>` +
+    `font-family="sans-serif">${esc(courseName)}</text>` +
     `<text x="${W - 120}" y="1035" text-anchor="end" fill="#555B66" font-size="22" ` +
-    `font-family="'Segoe UI', Arial, sans-serif">${slideIndex + 1} / ${totalSlides}</text>`;
+    `font-family="sans-serif">${slideIndex + 1} / ${totalSlides}</text>`;
 
   // ── Progress bar at very bottom ──
   const progressWidth = totalSlides > 1 ? ((slideIndex + 1) / totalSlides) * W : W;
