@@ -98,7 +98,7 @@ export default function CustomizeTab({ color, lang = "en" }: Props) {
       {/* ── 1. Industry ── */}
       <div className="bg-bg-card border border-border rounded-2xl p-5 mb-5">
         <h3 className="text-sm font-bold mb-1">{T("cust.industry")}</h3>
-        <p className="text-[11px] text-muted mb-3">
+        <p className="text-[13px] text-muted mb-3">
           AI will use examples from your industry — even if the course materials don't mention it.
         </p>
         <input
@@ -113,7 +113,7 @@ export default function CustomizeTab({ color, lang = "en" }: Props) {
             <button
               key={ind}
               onClick={() => setIndustry(ind)}
-              className="px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-all"
+              className="px-3 py-1.5 rounded-lg text-[13px] font-medium border transition-all"
               style={{
                 background: industry === ind ? color + "20" : "var(--color-bg)",
                 borderColor: industry === ind ? color : "var(--color-border)",
@@ -129,7 +129,7 @@ export default function CustomizeTab({ color, lang = "en" }: Props) {
       {/* ── 2. Example vs Text ── */}
       <div className="bg-bg-card border border-border rounded-2xl p-5 mb-5">
         <h3 className="text-sm font-bold mb-1">{T("cust.examples")}</h3>
-        <p className="text-[11px] text-muted mb-3">
+        <p className="text-[13px] text-muted mb-3">
           Control how much real-world content vs academic theory appears in generated material.
         </p>
         <div className="grid grid-cols-3 gap-3">
@@ -149,7 +149,7 @@ export default function CustomizeTab({ color, lang = "en" }: Props) {
                 <p className="text-xs font-bold" style={{ color: active ? color : "var(--color-text)" }}>
                   {opt.label}
                 </p>
-                <p className="text-[10px] text-muted mt-1 leading-relaxed">{opt.desc}</p>
+                <p className="text-[12px] text-muted mt-1 leading-relaxed">{opt.desc}</p>
               </button>
             );
           })}
@@ -159,7 +159,7 @@ export default function CustomizeTab({ color, lang = "en" }: Props) {
       {/* ── 3. Explanation Level ── */}
       <div className="bg-bg-card border border-border rounded-2xl p-5 mb-6">
         <h3 className="text-sm font-bold mb-1">{T("cust.level")}</h3>
-        <p className="text-[11px] text-muted mb-3">
+        <p className="text-[13px] text-muted mb-3">
           How complex should the language and explanations be?
         </p>
         <div className="flex gap-2 flex-wrap">
@@ -187,12 +187,12 @@ export default function CustomizeTab({ color, lang = "en" }: Props) {
       {/* ── 4. Accessibility ── */}
       <div className="bg-bg-card border border-border rounded-2xl p-5 mb-6">
         <h3 className="text-sm font-bold mb-1">{T("cust.accessibility")}</h3>
-        <p className="text-[11px] text-muted mb-4">
+        <p className="text-[13px] text-muted mb-4">
           Visual reading aids — applied to all dashboard text immediately after saving.
         </p>
 
         {/* Font */}
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-2">{T("cust.font")}</p>
+        <p className="text-[13px] font-semibold uppercase tracking-wider text-muted mb-2">{T("cust.font")}</p>
         <div className="flex gap-2 flex-wrap mb-4">
           {FONT_OPTIONS.map((opt) => {
             const active = font === opt.value;
@@ -207,14 +207,14 @@ export default function CustomizeTab({ color, lang = "en" }: Props) {
                 }}
               >
                 <p className="text-xs font-bold" style={{ color: active ? color : "var(--color-text)" }}>{opt.label}</p>
-                <p className="text-[10px] text-muted mt-0.5 leading-relaxed">{opt.desc}</p>
+                <p className="text-[12px] text-muted mt-0.5 leading-relaxed">{opt.desc}</p>
               </button>
             );
           })}
         </div>
 
         {/* Reading Mode */}
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-2">{T("cust.reading")}</p>
+        <p className="text-[13px] font-semibold uppercase tracking-wider text-muted mb-2">{T("cust.reading")}</p>
         <div className="flex gap-2 flex-wrap">
           {READING_OPTIONS.map((opt) => {
             const active = readingMode === opt.value;
@@ -229,7 +229,7 @@ export default function CustomizeTab({ color, lang = "en" }: Props) {
                 }}
               >
                 <p className="text-xs font-bold" style={{ color: active ? color : "var(--color-text)" }}>{opt.label}</p>
-                <p className="text-[10px] text-muted mt-0.5 leading-relaxed">{opt.desc}</p>
+                <p className="text-[12px] text-muted mt-0.5 leading-relaxed">{opt.desc}</p>
               </button>
             );
           })}
@@ -239,9 +239,9 @@ export default function CustomizeTab({ color, lang = "en" }: Props) {
       {/* ── 5. Color Scheme ── */}
       <div className="bg-bg-card border border-border rounded-2xl p-5 mb-5">
         <h3 className="text-sm font-bold mb-1">Color Scheme</h3>
-        <p className="text-[11px] text-muted mb-4">Choose the visual theme for the dashboard.</p>
+        <p className="text-[13px] text-muted mb-4">Choose the visual theme for the dashboard.</p>
         <div className="mb-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-2">Dark</p>
+          <p className="text-[12px] font-semibold uppercase tracking-wider text-muted mb-2">Dark</p>
           <div className="flex flex-wrap gap-3">
             {THEMES.filter((th) => th.dark).map((th) => (
               <button key={th.id} onClick={() => { setTheme(th.id); saveTheme(th.id); }}
@@ -254,7 +254,7 @@ export default function CustomizeTab({ color, lang = "en" }: Props) {
                   <span className="flex-1" style={{ background: th.swatches[0] }} />
                   <span className="w-2.5" style={{ background: th.swatches[1] }} />
                 </span>
-                <span className="text-[10px]" style={{ color: theme === th.id ? th.swatches[2] : "var(--color-muted)" }}>
+                <span className="text-[12px]" style={{ color: theme === th.id ? th.swatches[2] : "var(--color-muted)" }}>
                   {th.label}
                 </span>
               </button>
@@ -262,7 +262,7 @@ export default function CustomizeTab({ color, lang = "en" }: Props) {
           </div>
         </div>
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-2">Light</p>
+          <p className="text-[12px] font-semibold uppercase tracking-wider text-muted mb-2">Light</p>
           <div className="flex flex-wrap gap-3">
             {THEMES.filter((th) => !th.dark).map((th) => (
               <button key={th.id} onClick={() => { setTheme(th.id); saveTheme(th.id); }}
@@ -275,7 +275,7 @@ export default function CustomizeTab({ color, lang = "en" }: Props) {
                   <span className="flex-1" style={{ background: th.swatches[0] }} />
                   <span className="w-2.5" style={{ background: th.swatches[1] }} />
                 </span>
-                <span className="text-[10px]" style={{ color: theme === th.id ? th.swatches[2] : "var(--color-muted)" }}>
+                <span className="text-[12px]" style={{ color: theme === th.id ? th.swatches[2] : "var(--color-muted)" }}>
                   {th.label}
                 </span>
               </button>
@@ -287,7 +287,7 @@ export default function CustomizeTab({ color, lang = "en" }: Props) {
       {/* ── 6. Language ── */}
       <div className="bg-bg-card border border-border rounded-2xl p-5 mb-6">
         <h3 className="text-sm font-bold mb-1">Language</h3>
-        <p className="text-[11px] text-muted mb-3">AI-generated content will be produced in your selected language.</p>
+        <p className="text-[13px] text-muted mb-3">AI-generated content will be produced in your selected language.</p>
         <div className="flex flex-wrap gap-2">
           {LANGUAGES.map((l) => {
             const active = lang === l.code;
@@ -331,7 +331,7 @@ export default function CustomizeTab({ color, lang = "en" }: Props) {
       {/* Preview */}
       {(industry || examples !== "balanced" || level !== "manager") && (
         <div className="mt-6 bg-bg-raised border border-border rounded-xl p-4">
-          <p className="text-[10px] text-muted uppercase tracking-wider mb-2">Preview — AI will be told:</p>
+          <p className="text-[12px] text-muted uppercase tracking-wider mb-2">Preview — AI will be told:</p>
           <p className="text-xs leading-relaxed" style={{ color: "var(--color-text)" }}>
             {industry && <span>Use <strong>{industry}</strong> industry examples. </span>}
             {examples === "maximize_examples" && <span>Maximize real-world scenarios over theory. </span>}

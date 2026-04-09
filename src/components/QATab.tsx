@@ -49,10 +49,10 @@ export default function QATab({ courseId, color, name, weeks }: Props) {
     <div className="h-full flex flex-col">
       {/* Week filter */}
       <div className="px-5 py-2 border-b border-border flex items-center gap-2 flex-wrap">
-        <span className="text-[10px] text-muted uppercase tracking-wider">Filter weeks:</span>
+        <span className="text-[12px] text-muted uppercase tracking-wider">Filter weeks:</span>
         <button
           onClick={() => setSelectedWeeks([])}
-          className={`px-2 py-1 rounded text-[10px] font-medium ${
+          className={`px-2 py-1 rounded text-[12px] font-medium ${
             !selectedWeeks.length ? "text-bg" : "text-muted bg-bg-raised border border-border-light"
           }`}
           style={!selectedWeeks.length ? { background: color } : {}}
@@ -63,7 +63,7 @@ export default function QATab({ courseId, color, name, weeks }: Props) {
           <button
             key={w.id}
             onClick={() => toggleWeek(w.id)}
-            className={`px-2 py-1 rounded text-[10px] font-medium border ${
+            className={`px-2 py-1 rounded text-[12px] font-medium border ${
               selectedWeeks.includes(w.id) ? "text-bg border-transparent" : "text-muted bg-bg-raised border-border-light"
             }`}
             style={selectedWeeks.includes(w.id) ? { background: color } : {}}

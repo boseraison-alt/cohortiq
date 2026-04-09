@@ -55,7 +55,7 @@ export function buildSlideSvg(
     .map(
       (line, i) =>
         `<text x="960" y="${titleStartY + i * titleLineHeight}" text-anchor="middle" ` +
-        `fill="${accentColor}" font-size="50" font-weight="bold" ` +
+        `fill="${accentColor}" font-size="56" font-weight="bold" ` +
         `font-family="serif">${esc(line)}</text>`
     )
     .join("\n    ");
@@ -77,7 +77,7 @@ export function buildSlideSvg(
   // If formulas present, bullets get left half; formulas get right half
   const bulletMaxX = hasFormulas ? 900 : 1750;
   const bulletCharsPerLine = hasFormulas ? 38 : 60;
-  const bulletFontSize = 32;
+  const bulletFontSize = 36;
   const bulletLineHeight = 44;
   const bulletSpacing = 22;
 
@@ -115,7 +115,7 @@ export function buildSlideSvg(
 
     // Label
     formulasSvg +=
-      `<text x="${formulaX}" y="${formulaY}" fill="${accentColor}" font-size="18" ` +
+      `<text x="${formulaX}" y="${formulaY}" fill="${accentColor}" font-size="22" ` +
       `font-weight="bold" font-family="sans-serif" ` +
       `letter-spacing="2">FORMULAS &amp; CALCULATIONS</text>\n    `;
     formulaY += 40;
@@ -124,7 +124,7 @@ export function buildSlideSvg(
       const fLines = wrapText(formula, 42);
       for (const fLine of fLines) {
         formulasSvg +=
-          `<text x="${formulaX + 10}" y="${formulaY}" fill="#8ECAE6" font-size="26" ` +
+          `<text x="${formulaX + 10}" y="${formulaY}" fill="#8ECAE6" font-size="30" ` +
           `font-family="monospace">${esc(fLine)}</text>\n    `;
         formulaY += 38;
       }
@@ -134,9 +134,9 @@ export function buildSlideSvg(
 
   // ── Footer ──
   const footerSvg =
-    `<text x="120" y="1035" fill="#555B66" font-size="22" ` +
+    `<text x="120" y="1035" fill="#555B66" font-size="26" ` +
     `font-family="sans-serif">${esc(courseName)}</text>` +
-    `<text x="${W - 120}" y="1035" text-anchor="end" fill="#555B66" font-size="22" ` +
+    `<text x="${W - 120}" y="1035" text-anchor="end" fill="#555B66" font-size="26" ` +
     `font-family="sans-serif">${slideIndex + 1} / ${totalSlides}</text>`;
 
   // ── Progress bar at very bottom ──

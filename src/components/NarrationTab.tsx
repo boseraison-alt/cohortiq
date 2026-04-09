@@ -201,13 +201,13 @@ export default function NarrationTab({ courseId, color, name, lang = "en" }: Pro
           className="px-3 py-2 border-b border-border flex items-center gap-1 cursor-pointer"
           onClick={() => setHistoryCollapsed((v) => !v)}
         >
-          <span className="text-[9px] text-muted">{historyCollapsed ? "\u25B6" : "\u25BC"}</span>
-          <span className="text-[10px] text-muted uppercase tracking-wider">Previous</span>
-          <span className="text-[10px] text-muted ml-auto">{history.length}</span>
+          <span className="text-[13px] text-muted">{historyCollapsed ? "\u25B6" : "\u25BC"}</span>
+          <span className="text-[12px] text-muted uppercase tracking-wider">Previous</span>
+          <span className="text-[12px] text-muted ml-auto">{history.length}</span>
         </div>
         {!historyCollapsed && (
           <div className="flex-1 overflow-y-auto px-2 py-2">
-            {!history.length && <p className="text-[10px] text-muted text-center py-4">No videos yet</p>}
+            {!history.length && <p className="text-[12px] text-muted text-center py-4">No videos yet</p>}
             {history.map((v) => (
               <div
                 key={v.id}
@@ -219,12 +219,12 @@ export default function NarrationTab({ courseId, color, name, lang = "en" }: Pro
                 }`}
               >
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px]">{v.sourceType === "presentation" ? "🎬" : "🎤"}</span>
+                  <span className="text-[12px]">{v.sourceType === "presentation" ? "🎬" : "🎤"}</span>
                   <p className="text-xs font-medium text-[#E4DED4] truncate leading-tight flex-1">
                     {v.title.replace(/^(Presentation|Narration): ?/, "")}
                   </p>
                 </div>
-                <p className="text-[10px] text-muted mt-0.5">
+                <p className="text-[12px] text-muted mt-0.5">
                   {v.fileSize ? formatBytes(v.fileSize) : ""} {"\u00B7"} {new Date(v.createdAt).toLocaleDateString()}
                 </p>
               </div>
@@ -256,17 +256,17 @@ export default function NarrationTab({ courseId, color, name, lang = "en" }: Pro
                   style={{ borderColor: `${color} transparent transparent transparent` }} />
               </div>
               <p className="text-xs font-semibold" style={{ color }}>{statusMsg}</p>
-              <span className="text-[10px] text-muted ml-auto">{timeRemaining()}</span>
+              <span className="text-[12px] text-muted ml-auto">{timeRemaining()}</span>
             </div>
             <div className="h-1.5 bg-bg-raised rounded-full overflow-hidden">
               <div className="h-full rounded-full transition-all duration-500"
                 style={{ width: `${progress}%`, background: color }} />
             </div>
             <div className="flex justify-between mt-1">
-              <span className="text-[9px] text-muted">
+              <span className="text-[13px] text-muted">
                 {phase === "slides" ? "Phase 1: Generating slides" : "Phase 2: Rendering video + audio"}
               </span>
-              <span className="text-[9px] text-muted">{Math.round(progress)}%</span>
+              <span className="text-[13px] text-muted">{Math.round(progress)}%</span>
             </div>
           </div>
         )}
@@ -278,7 +278,7 @@ export default function NarrationTab({ courseId, color, name, lang = "en" }: Pro
           {errorMsg && phase === "idle" && (
             <div className="max-w-xl mx-auto mb-5 bg-[#EF5350]/10 border border-[#EF5350]/30 rounded-xl px-4 py-3">
               <p className="text-xs text-[#EF5350] font-semibold">Error: {errorMsg}</p>
-              <button onClick={() => setErrorMsg("")} className="text-[10px] text-[#EF5350]/70 mt-1 hover:text-[#EF5350]">Dismiss</button>
+              <button onClick={() => setErrorMsg("")} className="text-[12px] text-[#EF5350]/70 mt-1 hover:text-[#EF5350]">Dismiss</button>
             </div>
           )}
 
@@ -294,7 +294,7 @@ export default function NarrationTab({ courseId, color, name, lang = "en" }: Pro
               </div>
 
               <div className="mb-5">
-                <label className="text-[10px] text-muted uppercase tracking-wider block mb-2">Topic</label>
+                <label className="text-[12px] text-muted uppercase tracking-wider block mb-2">Topic</label>
                 <textarea
                   value={topic} onChange={(e) => setTopic(e.target.value)}
                   placeholder={`e.g. "Cost-Volume-Profit Analysis" or "Marketing Strategy Frameworks"`}
@@ -304,7 +304,7 @@ export default function NarrationTab({ courseId, color, name, lang = "en" }: Pro
               </div>
 
               <div className="mb-6">
-                <label className="text-[10px] text-muted uppercase tracking-wider block mb-2">Duration</label>
+                <label className="text-[12px] text-muted uppercase tracking-wider block mb-2">Duration</label>
                 <div className="flex gap-1.5 flex-wrap">
                   {[5, 10, 15, 20, 25, 30].map((n) => (
                     <button key={n} onClick={() => setDuration(n)}
@@ -323,7 +323,7 @@ export default function NarrationTab({ courseId, color, name, lang = "en" }: Pro
                 🎬 Generate Video Presentation
               </button>
 
-              <p className="mt-3 text-[10px] text-muted text-center">
+              <p className="mt-3 text-[12px] text-muted text-center">
                 Claude + OpenAI TTS + FFmpeg {"\u00B7"} auto-saved to Videos folder
               </p>
             </div>
@@ -332,20 +332,20 @@ export default function NarrationTab({ courseId, color, name, lang = "en" }: Pro
           {/* Slide preview while generating video */}
           {slides.length > 0 && generating && (
             <div className="max-w-2xl mx-auto">
-              <p className="text-[10px] text-muted uppercase tracking-wider mb-3">
+              <p className="text-[12px] text-muted uppercase tracking-wider mb-3">
                 {slides.length} Slides — {phase === "slides" ? "Creating..." : "Rendering video..."}
               </p>
               <div className="space-y-2">
                 {slides.map((s, i) => (
                   <div key={i} className="bg-bg-card border border-border rounded-lg px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                      <span className="text-[12px] font-bold px-1.5 py-0.5 rounded"
                         style={{ background: color + "20", color }}>{i + 1}</span>
                       <p className="text-sm font-semibold text-[#E4DED4]">{s.title}</p>
                     </div>
                     <div className="mt-2 ml-7 space-y-0.5">
                       {s.points.map((p, pi) => (
-                        <p key={pi} className="text-[11px] text-muted">• {p}</p>
+                        <p key={pi} className="text-[13px] text-muted">• {p}</p>
                       ))}
                     </div>
                   </div>
@@ -385,7 +385,7 @@ export default function NarrationTab({ courseId, color, name, lang = "en" }: Pro
                   style={{ borderColor: color + "40", color, background: color + "12" }}>
                   ⬇ Download {currentVideo.sourceType === "presentation" ? "MP4" : "MP3"}
                   {currentVideo.fileSize && (
-                    <span className="text-[10px] opacity-70">{formatBytes(currentVideo.fileSize)}</span>
+                    <span className="text-[12px] opacity-70">{formatBytes(currentVideo.fileSize)}</span>
                   )}
                 </a>
                 <button
@@ -398,12 +398,12 @@ export default function NarrationTab({ courseId, color, name, lang = "en" }: Pro
               {/* Slides outline */}
               {phase === "done" && slides.length > 0 && (
                 <div className="mt-6">
-                  <p className="text-[10px] text-muted uppercase tracking-wider mb-2">Slide Outline</p>
+                  <p className="text-[12px] text-muted uppercase tracking-wider mb-2">Slide Outline</p>
                   <div className="bg-bg-card border border-border rounded-xl px-5 py-4 max-h-60 overflow-y-auto">
                     {slides.map((s, i) => (
                       <div key={i} className="mb-3 last:mb-0">
                         <p className="text-xs font-semibold text-[#E4DED4]">{i + 1}. {s.title}</p>
-                        <p className="text-[10px] text-muted mt-0.5 ml-4">
+                        <p className="text-[12px] text-muted mt-0.5 ml-4">
                           {s.points.join(" • ")}
                         </p>
                       </div>

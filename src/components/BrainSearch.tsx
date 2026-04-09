@@ -98,7 +98,7 @@ export default function BrainSearch({ onClose }: Props) {
               <h2 className="font-serif text-base font-bold" style={{ color: "var(--color-text)" }}>
                 Master Mind
               </h2>
-              <p className="text-[11px]" style={{ color: "var(--color-muted)" }}>
+              <p className="text-[13px]" style={{ color: "var(--color-muted)" }}>
                 Cross-course AI search across your entire curriculum
               </p>
             </div>
@@ -155,7 +155,7 @@ export default function BrainSearch({ onClose }: Props) {
               <p className="text-sm font-serif" style={{ color: "var(--color-muted-light)" }}>
                 Searching across all courses…
               </p>
-              <p className="text-[11px]" style={{ color: "var(--color-muted)" }}>
+              <p className="text-[13px]" style={{ color: "var(--color-muted)" }}>
                 Connecting ideas from your entire curriculum
               </p>
             </div>
@@ -174,16 +174,16 @@ export default function BrainSearch({ onClose }: Props) {
               {/* Source chips */}
               {sources.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-4">
-                  <span className="text-[10px] text-muted self-center mr-1">Sources:</span>
+                  <span className="text-[12px] text-muted self-center mr-1">Sources:</span>
                   {sources.map((s) => (
                     <span
                       key={s.courseId}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                      className="inline-flex items-center gap-1 text-[13px] font-semibold px-2.5 py-1 rounded-full"
                       style={{ background: s.color + "20", color: s.color, border: `1px solid ${s.color}40` }}
                     >
                       <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: s.color }} />
                       {s.courseName}
-                      <span className="text-[9px] opacity-60 ml-0.5">{s.chunkCount} refs</span>
+                      <span className="text-[13px] opacity-60 ml-0.5">{s.chunkCount} refs</span>
                     </span>
                   ))}
                 </div>
@@ -204,7 +204,7 @@ export default function BrainSearch({ onClose }: Props) {
               {/* Ask another */}
               <button
                 onClick={() => { setQuery(""); setAnswer(""); setSources([]); inputRef.current?.focus(); }}
-                className="mt-3 text-[11px] font-semibold transition-all"
+                className="mt-3 text-[13px] font-semibold transition-all"
                 style={{ color: "#7B6CF6" }}
               >
                 ← Ask another question
@@ -219,12 +219,12 @@ export default function BrainSearch({ onClose }: Props) {
               {history.length > 0 && (
                 <div className="flex items-center gap-2 mb-4">
                   <button onClick={() => setShowHistory(false)}
-                    className="text-[11px] font-semibold px-3 py-1 rounded-lg border transition-all"
+                    className="text-[13px] font-semibold px-3 py-1 rounded-lg border transition-all"
                     style={{ background: !showHistory ? "#7B6CF620" : "transparent", borderColor: !showHistory ? "#7B6CF6" : "var(--color-border)", color: !showHistory ? "#7B6CF6" : "var(--color-muted)" }}>
                     New Search
                   </button>
                   <button onClick={() => setShowHistory(true)}
-                    className="text-[11px] font-semibold px-3 py-1 rounded-lg border transition-all"
+                    className="text-[13px] font-semibold px-3 py-1 rounded-lg border transition-all"
                     style={{ background: showHistory ? "#7B6CF620" : "transparent", borderColor: showHistory ? "#7B6CF6" : "var(--color-border)", color: showHistory ? "#7B6CF6" : "var(--color-muted)" }}>
                     Past Searches ({history.length})
                   </button>
@@ -243,13 +243,13 @@ export default function BrainSearch({ onClose }: Props) {
                       onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; }}>
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <p className="text-sm font-medium flex-1" style={{ color: "var(--color-text)" }}>{h.question}</p>
-                        <span className="text-[9px] font-mono shrink-0" style={{ color: "var(--color-muted)" }}>{new Date(h.createdAt).toLocaleDateString()}</span>
+                        <span className="text-[13px] font-mono shrink-0" style={{ color: "var(--color-muted)" }}>{new Date(h.createdAt).toLocaleDateString()}</span>
                       </div>
-                      <p className="text-[11px] line-clamp-2" style={{ color: "var(--color-muted)" }}>{h.answer.slice(0, 150)}…</p>
+                      <p className="text-[13px] line-clamp-2" style={{ color: "var(--color-muted)" }}>{h.answer.slice(0, 150)}…</p>
                       {h.sources.length > 0 && (
                         <div className="flex gap-1 mt-2">
                           {h.sources.map((s, i) => (
-                            <span key={i} className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: s.color + "20", color: s.color }}>{s.courseName}</span>
+                            <span key={i} className="text-[13px] px-1.5 py-0.5 rounded-full" style={{ background: s.color + "20", color: s.color }}>{s.courseName}</span>
                           ))}
                         </div>
                       )}
@@ -259,7 +259,7 @@ export default function BrainSearch({ onClose }: Props) {
               ) : (
               <>
 
-              <p className="text-[11px] text-muted uppercase tracking-widest mb-3">Try asking…</p>
+              <p className="text-[13px] text-muted uppercase tracking-widest mb-3">Try asking…</p>
               <div className="space-y-2">
                 {EXAMPLE_QUERIES.map((q, i) => (
                   <button
@@ -287,8 +287,8 @@ export default function BrainSearch({ onClose }: Props) {
               </div>
 
               <div className="mt-6 px-4 py-3 rounded-xl" style={{ background: "var(--color-bg)", border: "1px solid var(--color-border)" }}>
-                <p className="text-[11px] font-semibold mb-1" style={{ color: "#7B6CF6" }}>💡 How Master Mind works</p>
-                <p className="text-[11px] leading-relaxed" style={{ color: "var(--color-muted)" }}>
+                <p className="text-[13px] font-semibold mb-1" style={{ color: "#7B6CF6" }}>💡 How Master Mind works</p>
+                <p className="text-[13px] leading-relaxed" style={{ color: "var(--color-muted)" }}>
                   Unlike standard search, Master Mind retrieves relevant material from <strong>every course</strong> simultaneously,
                   then synthesizes the connections — surfacing insights that cross-disciplinary thinking reveals.
                 </p>

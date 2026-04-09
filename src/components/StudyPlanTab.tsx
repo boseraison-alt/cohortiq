@@ -134,7 +134,7 @@ export default function StudyPlanTab({ courseId, color, name, onNavigate }: Prop
               <p className="font-serif text-sm italic leading-relaxed" style={{ color: "var(--color-muted-light)" }}>
                 "If you don't know when things are due, how do you know how long to procrastinate?"
               </p>
-              <p className="text-[11px] font-semibold mt-2" style={{ color }}>— Brad Lyons</p>
+              <p className="text-[13px] font-semibold mt-2" style={{ color }}>— Brad Lyons</p>
             </div>
           </div>
 
@@ -191,10 +191,10 @@ export default function StudyPlanTab({ courseId, color, name, onNavigate }: Prop
           {/* Weak topics preview */}
           {weakTopics.length > 0 && (
             <div className="rounded-xl px-4 py-3 mb-6" style={{ background: "#EF535010", border: "1px solid #EF535030" }}>
-              <p className="text-[11px] font-bold text-[#EF5350] mb-2">⚠️ Your plan will prioritize these weak areas:</p>
+              <p className="text-[13px] font-bold text-[#EF5350] mb-2">⚠️ Your plan will prioritize these weak areas:</p>
               <div className="flex flex-wrap gap-1.5">
                 {weakTopics.map((t) => (
-                  <span key={t.topic} className="text-[11px] px-2 py-0.5 rounded-full bg-[#EF535015] text-[#EF5350] border border-[#EF535030]">
+                  <span key={t.topic} className="text-[13px] px-2 py-0.5 rounded-full bg-[#EF535015] text-[#EF5350] border border-[#EF535030]">
                     {t.topic} — {t.accuracy}%
                   </span>
                 ))}
@@ -214,7 +214,7 @@ export default function StudyPlanTab({ courseId, color, name, onNavigate }: Prop
             Generate My Study Plan →
           </button>
 
-          <p className="text-[10px] text-center mt-3" style={{ color: "var(--color-muted)" }}>
+          <p className="text-[12px] text-center mt-3" style={{ color: "var(--color-muted)" }}>
             Personalized using your {topicStats.length > 0 ? `${topicStats.length}-topic` : ""} practice history
           </p>
         </div>
@@ -252,7 +252,7 @@ export default function StudyPlanTab({ courseId, color, name, onNavigate }: Prop
           <h2 className="font-serif text-sm font-bold truncate" style={{ color }}>
             {plan!.planTitle}
           </h2>
-          <p className="text-[11px] mt-0.5 line-clamp-1" style={{ color: "var(--color-muted)" }}>
+          <p className="text-[13px] mt-0.5 line-clamp-1" style={{ color: "var(--color-muted)" }}>
             {plan!.summary}
           </p>
         </div>
@@ -260,10 +260,10 @@ export default function StudyPlanTab({ courseId, color, name, onNavigate }: Prop
         {/* Overall progress */}
         <div className="shrink-0 flex items-center gap-3">
           <div className="text-right">
-            <p className="text-[10px] font-bold" style={{ color }}>
+            <p className="text-[12px] font-bold" style={{ color }}>
               {completedCount}/{allTasks.length} tasks
             </p>
-            <p className="text-[9px]" style={{ color: "var(--color-muted)" }}>{progressPct}% done</p>
+            <p className="text-[13px]" style={{ color: "var(--color-muted)" }}>{progressPct}% done</p>
           </div>
           <div className="w-24 h-2 bg-bg-raised rounded-full overflow-hidden">
             <div className="h-full rounded-full transition-all"
@@ -271,7 +271,7 @@ export default function StudyPlanTab({ courseId, color, name, onNavigate }: Prop
           </div>
           <button
             onClick={() => { setPlan(null); setTopicStats([]); }}
-            className="text-[10px] px-2 py-1 rounded-lg border transition-all"
+            className="text-[12px] px-2 py-1 rounded-lg border transition-all"
             style={{ borderColor: "var(--color-border)", color: "var(--color-muted)" }}
           >
             ↩ New Plan
@@ -300,7 +300,7 @@ export default function StudyPlanTab({ courseId, color, name, onNavigate }: Prop
                   background: isActive ? color + "12" : "transparent",
                 }}
               >
-                <span className="text-[9px] font-bold uppercase tracking-wider mb-0.5"
+                <span className="text-[13px] font-bold uppercase tracking-wider mb-0.5"
                   style={{ color: isActive ? color : "var(--color-muted)" }}>
                   {isExam ? "EXAM" : `Day ${d.day}`}
                 </span>
@@ -326,7 +326,7 @@ export default function StudyPlanTab({ courseId, color, name, onNavigate }: Prop
             <div className="flex items-start justify-between mb-5">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  <span className="text-[12px] font-bold px-2 py-0.5 rounded-full"
                     style={{
                       background: URGENCY_COLOR[currentDay.urgency] + "20",
                       color: URGENCY_COLOR[currentDay.urgency],
@@ -335,7 +335,7 @@ export default function StudyPlanTab({ courseId, color, name, onNavigate }: Prop
                      currentDay.urgency === "medium" ? "📅 STEADY" : "🌱 LIGHT DAY"}
                   </span>
                   {examDay && currentDay.day < plan!.days.length && (
-                    <span className="text-[10px] text-muted">
+                    <span className="text-[12px] text-muted">
                       {plan!.days.length - currentDay.day} day{plan!.days.length - currentDay.day !== 1 ? "s" : ""} to exam
                     </span>
                   )}
@@ -376,7 +376,7 @@ export default function StudyPlanTab({ courseId, color, name, onNavigate }: Prop
                           background: done ? cfg.text : "transparent",
                         }}
                       >
-                        {done && <span className="text-white text-[10px] font-bold">✓</span>}
+                        {done && <span className="text-white text-[12px] font-bold">✓</span>}
                       </button>
 
                       <div className="flex-1 min-w-0">
@@ -390,13 +390,13 @@ export default function StudyPlanTab({ courseId, color, name, onNavigate }: Prop
                               — {task.topic}
                             </span>
                           )}
-                          <span className="text-[10px] ml-auto" style={{ color: "var(--color-muted)" }}>
+                          <span className="text-[12px] ml-auto" style={{ color: "var(--color-muted)" }}>
                             {task.count ? `${task.count} items · ` : ""}{task.durationMin} min
                           </span>
                         </div>
 
                         {task.note && (
-                          <p className="text-[11px] mt-1.5 leading-relaxed" style={{ color: "var(--color-muted-light)" }}>
+                          <p className="text-[13px] mt-1.5 leading-relaxed" style={{ color: "var(--color-muted-light)" }}>
                             {task.note}
                           </p>
                         )}
@@ -410,7 +410,7 @@ export default function StudyPlanTab({ courseId, color, name, onNavigate }: Prop
                               task.type === "practice" ? "practice" : "chat",
                               task.topic || undefined
                             )}
-                            className="mt-2 text-[10px] font-bold px-3 py-1 rounded-lg transition-all"
+                            className="mt-2 text-[12px] font-bold px-3 py-1 rounded-lg transition-all"
                             style={{ background: cfg.text + "20", color: cfg.text, border: `1px solid ${cfg.text}40` }}
                           >
                             Start {cfg.label} →

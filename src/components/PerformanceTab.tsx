@@ -80,7 +80,7 @@ export default function PerformanceTab({ courseId, color, lang = "en" }: Props) 
           { label: T("cards.mastered"), value: totalCards ? `${totalMastered}/${totalCards}` : "—" },
         ].map((s, i) => (
           <div key={i} className="bg-bg-card border border-border rounded-xl px-4 py-4">
-            <p className="text-[10px] text-muted uppercase tracking-wider mb-1.5">{s.label}</p>
+            <p className="text-[12px] text-muted uppercase tracking-wider mb-1.5">{s.label}</p>
             <p className="text-2xl font-bold font-serif" style={{ color }}>{s.value}</p>
           </div>
         ))}
@@ -97,7 +97,7 @@ export default function PerformanceTab({ courseId, color, lang = "en" }: Props) 
                 <span className="text-xs font-bold" style={{ color: s.rate >= 70 ? "#4CAF50" : s.rate >= 50 ? "#FFA726" : "#EF5350" }}>
                   {s.rate}%
                 </span>
-                <span className="text-[10px] text-muted">{s.correct}/{s.total}</span>
+                <span className="text-[12px] text-muted">{s.correct}/{s.total}</span>
               </div>
               <div className="h-1 bg-border rounded overflow-hidden">
                 <div className="h-full rounded transition-all" style={{
@@ -114,7 +114,7 @@ export default function PerformanceTab({ courseId, color, lang = "en" }: Props) 
       {masteryStats.length > 0 && (
         <>
           <h3 className="text-sm font-semibold mt-6 mb-1">{T("cards.mastered")} — Flashcard Progress</h3>
-          <p className="text-[10px] text-muted mb-3">
+          <p className="text-[12px] text-muted mb-3">
             <span className="inline-flex items-center gap-1 mr-3">
               <span className="w-2 h-2 rounded-full inline-block" style={{ background: "#4CAF50" }} /> Mastered (3+ correct)
             </span>
@@ -133,7 +133,7 @@ export default function PerformanceTab({ courseId, color, lang = "en" }: Props) 
               <div key={i} className="bg-bg-card border border-border rounded-lg mb-2 px-4 py-3">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="flex-1 text-sm font-medium">{s.topic}</span>
-                  <span className="text-[10px] text-muted">{s.mastered}/{s.total} mastered</span>
+                  <span className="text-[12px] text-muted">{s.mastered}/{s.total} mastered</span>
                 </div>
                 <div className="h-2 rounded overflow-hidden flex gap-px" style={{ background: "var(--color-border)" }}>
                   {masteredPct > 0 && <div className="h-full" style={{ width: `${masteredPct}%`, background: "#4CAF50" }} />}
@@ -156,8 +156,8 @@ export default function PerformanceTab({ courseId, color, lang = "en" }: Props) 
                 {p.score}
               </span>
               <span className="text-muted-light flex-1 truncate">{p.question}</span>
-              <span className="text-muted text-[10px]">{p.topic}</span>
-              <span className="text-muted text-[10px]">{new Date(p.createdAt).toLocaleDateString()}</span>
+              <span className="text-muted text-[12px]">{p.topic}</span>
+              <span className="text-muted text-[12px]">{new Date(p.createdAt).toLocaleDateString()}</span>
             </div>
           ))}
         </>

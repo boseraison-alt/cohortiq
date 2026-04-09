@@ -282,7 +282,7 @@ export default function ConceptMapTab({ courseId, color, lang = "en" }: Props) {
           {loading ? T("map.generating") : T("map.generate")}
         </button>
         {loading && (
-          <p className="text-[11px] text-muted animate-pulse">Reading course materials…</p>
+          <p className="text-[13px] text-muted animate-pulse">Reading course materials…</p>
         )}
       </div>
     );
@@ -313,13 +313,13 @@ export default function ConceptMapTab({ courseId, color, lang = "en" }: Props) {
         <span className="text-sm font-semibold flex-1" style={{ color }}>
           🧩 {tree.title}
         </span>
-        <span className="text-[10px] text-muted hidden sm:block">
+        <span className="text-[12px] text-muted hidden sm:block">
           Click to expand · Drag to pan · Scroll to zoom
         </span>
         <button
           onClick={() => { setTree(null); generate(); }}
           disabled={loading}
-          className="btn-haptic px-3 py-1.5 rounded-lg text-[11px] border border-border text-muted disabled:opacity-50"
+          className="btn-haptic px-3 py-1.5 rounded-lg text-[13px] border border-border text-muted disabled:opacity-50"
         >
           {loading ? T("map.generating") : T("map.regenerate")}
         </button>
@@ -435,7 +435,7 @@ export default function ConceptMapTab({ courseId, color, lang = "en" }: Props) {
                   {/* Expand chevron — rotates on expand */}
                   {ln.hasChildren && !isRoot && (
                     <span
-                      className="absolute -bottom-3 left-1/2 w-5 h-5 rounded-full flex items-center justify-center text-[10px]"
+                      className="absolute -bottom-3 left-1/2 w-5 h-5 rounded-full flex items-center justify-center text-[12px]"
                       style={{
                         background: ds.background as string,
                         border: `1px solid ${color}40`,
@@ -507,7 +507,7 @@ export default function ConceptMapTab({ courseId, color, lang = "en" }: Props) {
 
             {selectedNode.children.length > 0 && (
               <div>
-                <p className="text-[10px] text-muted uppercase tracking-widest mb-2.5">
+                <p className="text-[12px] text-muted uppercase tracking-widest mb-2.5">
                   {selectedNode.children.length} sub-topics
                 </p>
                 {selectedNode.children.map((child) => (
@@ -529,7 +529,7 @@ export default function ConceptMapTab({ courseId, color, lang = "en" }: Props) {
                     <span className="font-semibold" style={{ color }}>
                       {child.label}
                     </span>
-                    <p className="text-[10px] text-muted mt-0.5 line-clamp-2 leading-relaxed">
+                    <p className="text-[12px] text-muted mt-0.5 line-clamp-2 leading-relaxed">
                       {child.summary}
                     </p>
                   </button>
@@ -539,7 +539,7 @@ export default function ConceptMapTab({ courseId, color, lang = "en" }: Props) {
 
             <button
               onClick={() => setSelectedNode(null)}
-              className="btn-haptic mt-5 text-[10px] text-muted hover:text-muted-light flex items-center gap-1"
+              className="btn-haptic mt-5 text-[12px] text-muted hover:text-muted-light flex items-center gap-1"
             >
               <span style={{ fontSize: 9 }}>✕</span> Close
             </button>

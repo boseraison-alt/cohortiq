@@ -55,21 +55,21 @@ export default function PWARegister() {
       <img src="/icon.svg" alt="CohortIQ" className="w-10 h-10 rounded-xl shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-xs font-bold text-white leading-tight">Install CohortIQ</p>
-        <p className="text-[10px] text-purple-200 mt-0.5 leading-tight">
+        <p className="text-[12px] text-purple-200 mt-0.5 leading-tight">
           Listen to podcasts offline on your commute
         </p>
       </div>
       <div className="flex flex-col gap-1.5 shrink-0">
         <button
           onClick={install}
-          className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-white transition-all"
+          className="px-3 py-1.5 rounded-lg text-[13px] font-bold text-white transition-all"
           style={{ background: "#C4A265" }}
         >
           Install
         </button>
         <button
           onClick={() => setShowBanner(false)}
-          className="text-[10px] text-purple-300 hover:text-white transition-all text-center"
+          className="text-[12px] text-purple-300 hover:text-white transition-all text-center"
         >
           Not now
         </button>

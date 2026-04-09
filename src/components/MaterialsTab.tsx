@@ -178,10 +178,10 @@ export default function MaterialsTab({ courseId, weeks, unassigned, color, onRef
   const renderMaterial = (m: any) => (
     <div key={m.id} className="bg-bg border border-border rounded-lg mb-1.5 overflow-hidden">
       <div onClick={() => loadPreview(m.id)} className="flex items-center gap-2 px-4 py-3 cursor-pointer hover:bg-bg-raised/30 transition-all">
-        <span className="text-[9px]" style={{ color }}>{expanded === m.id ? "▼" : "▶"}</span>
+        <span className="text-[13px]" style={{ color }}>{expanded === m.id ? "▼" : "▶"}</span>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{m.title}</p>
-          <p className="text-[10px] text-muted mt-0.5">
+          <p className="text-[12px] text-muted mt-0.5">
             {new Date(m.createdAt).toLocaleDateString()} · {m.wordCount.toLocaleString()} words · {m.sourceType}
             {m.status && m.status !== "approved" && (
               <span className={`ml-1.5 px-1.5 py-0.5 rounded font-semibold uppercase ${
@@ -202,7 +202,7 @@ export default function MaterialsTab({ courseId, weeks, unassigned, color, onRef
       </div>
       {expanded === m.id && (
         <div className="px-4 pb-3 max-h-60 overflow-y-auto">
-          <pre className="font-mono text-[11px] leading-relaxed text-muted-light whitespace-pre-wrap break-words">
+          <pre className="font-mono text-[13px] leading-relaxed text-muted-light whitespace-pre-wrap break-words">
             {preview}
           </pre>
         </div>
@@ -232,7 +232,7 @@ export default function MaterialsTab({ courseId, weeks, unassigned, color, onRef
         </label>
         {uploading && <span className="text-xs" style={{ color }}>{uploading}</span>}
         <span className="flex-1" />
-        <span className="text-[10px] text-muted">Unlimited · PDF · DOCX · TXT</span>
+        <span className="text-[12px] text-muted">Unlimited · PDF · DOCX · TXT</span>
       </div>
 
       {/* Paste area */}
@@ -279,19 +279,19 @@ export default function MaterialsTab({ courseId, weeks, unassigned, color, onRef
                   onClick={() => setVideosCollapsed((v) => !v)}
                   className="flex items-center gap-2 cursor-pointer flex-1"
                 >
-                  <span className="text-[9px] text-muted">{videosCollapsed ? "▶" : "▼"}</span>
+                  <span className="text-[13px] text-muted">{videosCollapsed ? "▶" : "▼"}</span>
                   <span className="text-base leading-none">🎬</span>
                   <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color }}>Videos</h3>
-                  <span className="text-[10px] text-muted">{videos.length} video{videos.length !== 1 ? "s" : ""}</span>
+                  <span className="text-[12px] text-muted">{videos.length} video{videos.length !== 1 ? "s" : ""}</span>
                 </div>
                 {/* Add buttons */}
                 <button
                   onClick={() => { setVideoMode(videoMode === "url" ? null : "url"); setVideosCollapsed(false); }}
-                  className="text-[10px] px-2 py-1 rounded border border-border-light text-muted-light hover:border-accent/50 transition-all"
+                  className="text-[12px] px-2 py-1 rounded border border-border-light text-muted-light hover:border-accent/50 transition-all"
                 >
                   + URL
                 </button>
-                <label className="text-[10px] px-2 py-1 rounded border border-border-light text-muted-light hover:border-accent/50 transition-all cursor-pointer">
+                <label className="text-[12px] px-2 py-1 rounded border border-border-light text-muted-light hover:border-accent/50 transition-all cursor-pointer">
                   ⬆ File
                   <input
                     ref={videoFileRef}
@@ -311,8 +311,8 @@ export default function MaterialsTab({ courseId, weeks, unassigned, color, onRef
                   {videoMode === "url" && (
                     <div className="bg-[#0D0F14] border border-border rounded-xl p-3 mb-3">
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-[10px] text-muted uppercase tracking-wider">Add Video URL</p>
-                        <button onClick={() => setVideoMode(null)} className="text-[10px] text-muted hover:text-danger">✕</button>
+                        <p className="text-[12px] text-muted uppercase tracking-wider">Add Video URL</p>
+                        <button onClick={() => setVideoMode(null)} className="text-[12px] text-muted hover:text-danger">✕</button>
                       </div>
                       <input
                         value={videoTitle} onChange={(e) => setVideoTitle(e.target.value)}
@@ -346,7 +346,7 @@ export default function MaterialsTab({ courseId, weeks, unassigned, color, onRef
 
                   {/* Video list */}
                   {videos.length === 0 && !videoUploading ? (
-                    <p className="text-[11px] text-muted px-2 py-2">
+                    <p className="text-[13px] text-muted px-2 py-2">
                       No videos yet — use "+ URL" or "⬆ File" above to add one.
                     </p>
                   ) : (
@@ -364,9 +364,9 @@ export default function MaterialsTab({ courseId, weeks, unassigned, color, onRef
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">{v.title}</p>
                               {v.description && (
-                                <p className="text-[10px] text-muted mt-0.5 truncate">{v.description}</p>
+                                <p className="text-[12px] text-muted mt-0.5 truncate">{v.description}</p>
                               )}
-                              <p className="text-[10px] text-muted mt-0.5">
+                              <p className="text-[12px] text-muted mt-0.5">
                                 {new Date(v.createdAt).toLocaleDateString()} · {typeLabel}
                               </p>
                             </div>
@@ -374,7 +374,7 @@ export default function MaterialsTab({ courseId, weeks, unassigned, color, onRef
                               <a
                                 href={v.url}
                                 download={v.fileName || true}
-                                className="text-[10px] font-semibold px-2.5 py-1.5 rounded-lg border transition-all hover:opacity-80"
+                                className="text-[12px] font-semibold px-2.5 py-1.5 rounded-lg border transition-all hover:opacity-80"
                                 style={{ borderColor: color + "40", color, background: color + "10" }}
                               >
                                 ⬇ Download
@@ -384,7 +384,7 @@ export default function MaterialsTab({ courseId, weeks, unassigned, color, onRef
                                 href={v.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-[10px] font-semibold px-2.5 py-1.5 rounded-lg border transition-all hover:opacity-80"
+                                className="text-[12px] font-semibold px-2.5 py-1.5 rounded-lg border transition-all hover:opacity-80"
                                 style={{ borderColor: color + "40", color, background: color + "10" }}
                               >
                                 ▶ Watch

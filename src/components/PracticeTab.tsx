@@ -98,7 +98,7 @@ export default function PracticeTab({ courseId, color, name, lang = "en" }: Prop
           <div className="flex gap-0.5 bg-bg-card rounded-md p-0.5">
             {([["weighted", "⚡ Weighted"], ["cumulative", "📋 Cumulative"]] as const).map(([k, l]) => (
               <button key={k} onClick={() => setMode(k)}
-                className="rounded px-2.5 py-1.5 text-[11px] font-semibold transition-all"
+                className="rounded px-2.5 py-1.5 text-[13px] font-semibold transition-all"
                 style={{ background: mode === k ? color : "transparent", color: mode === k ? "#fff" : "var(--color-muted)" }}>
                 {l}
               </button>
@@ -129,7 +129,7 @@ export default function PracticeTab({ courseId, color, name, lang = "en" }: Prop
 
         {/* Row 2: topic selector */}
         <div className="flex items-start gap-3 flex-wrap">
-          <span className="text-[10px] text-muted uppercase tracking-wider mt-2 shrink-0">Topic:</span>
+          <span className="text-[12px] text-muted uppercase tracking-wider mt-2 shrink-0">Topic:</span>
 
           {/* Random pill */}
           <button
@@ -176,7 +176,7 @@ export default function PracticeTab({ courseId, color, name, lang = "en" }: Prop
                     <button
                       key={topic}
                       onClick={() => setCustomTopic(topic)}
-                      className="px-2.5 py-1 rounded-lg text-[10px] font-medium border transition-all"
+                      className="px-2.5 py-1 rounded-lg text-[12px] font-medium border transition-all"
                       style={{
                         background: customTopic === topic ? color + "20" : "var(--color-bg)",
                         borderColor: customTopic === topic ? color : "var(--color-border)",
@@ -214,13 +214,13 @@ export default function PracticeTab({ courseId, color, name, lang = "en" }: Prop
         {questions.map((q, idx) => (
           <div key={idx} className="bg-bg-card border border-border rounded-xl mb-3 p-4">
             <div className="flex gap-2 mb-2 flex-wrap">
-              <span className="rounded px-2 py-0.5 text-[10px] font-bold" style={{ background: color + "30", color }}>
+              <span className="rounded px-2 py-0.5 text-[12px] font-bold" style={{ background: color + "30", color }}>
                 Q{idx + 1}
               </span>
-              <span className="bg-bg-raised rounded px-2 py-0.5 text-[10px] text-muted uppercase tracking-wider">
+              <span className="bg-bg-raised rounded px-2 py-0.5 text-[12px] text-muted uppercase tracking-wider">
                 {q.type}
               </span>
-              {q.topic && <span className="text-[10px] text-muted">· {q.topic}</span>}
+              {q.topic && <span className="text-[12px] text-muted">· {q.topic}</span>}
             </div>
             <p className="text-sm leading-relaxed mb-3" style={{ color: "var(--color-text)" }}>{q.q}</p>
 
@@ -252,13 +252,13 @@ export default function PracticeTab({ courseId, color, name, lang = "en" }: Prop
             <div className="flex gap-2">
               {answers[idx] && !graded[idx] && (
                 <button onClick={() => grade(idx)} disabled={grading[idx]}
-                  className="rounded px-3 py-1.5 text-[11px] font-semibold transition-all"
+                  className="rounded px-3 py-1.5 text-[13px] font-semibold transition-all"
                   style={{ background: grading[idx] ? "var(--color-border-light)" : color, color: "#fff" }}>
                   {grading[idx] ? T("prac.grading") : T("prac.submit")}
                 </button>
               )}
               <button onClick={() => setRevealed((p) => ({ ...p, [idx]: !p[idx] }))}
-                className="bg-bg-raised border border-border-light rounded px-3 py-1.5 text-[11px] text-muted-light">
+                className="bg-bg-raised border border-border-light rounded px-3 py-1.5 text-[13px] text-muted-light">
                 {revealed[idx] ? T("common.close") : T("prac.reveal")}
               </button>
             </div>
@@ -269,22 +269,22 @@ export default function PracticeTab({ courseId, color, name, lang = "en" }: Prop
                   <span className="text-lg font-bold font-serif" style={{ color: graded[idx].correct ? "#4CAF50" : "#EF5350" }}>
                     {graded[idx].score}
                   </span>
-                  <span className="text-[11px]" style={{ color: graded[idx].correct ? "#4CAF50" : "#EF5350" }}>
+                  <span className="text-[13px]" style={{ color: graded[idx].correct ? "#4CAF50" : "#EF5350" }}>
                     {graded[idx].correct ? T("prac.correct") : T("prac.incorrect")}
                   </span>
                 </div>
                 <p className="text-xs text-muted-light leading-relaxed">{graded[idx].feedback}</p>
                 {graded[idx].missed?.length > 0 && (
-                  <p className="text-[11px] text-danger mt-1.5">Missed: {graded[idx].missed.join("; ")}</p>
+                  <p className="text-[13px] text-danger mt-1.5">Missed: {graded[idx].missed.join("; ")}</p>
                 )}
               </div>
             )}
 
             {revealed[idx] && (
               <div className="mt-3 p-3 rounded-lg border" style={{ background: color + "0D", borderColor: color + "30" }}>
-                <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color }}>Model Answer</p>
+                <p className="text-[12px] font-bold uppercase tracking-wider mb-1" style={{ color }}>Model Answer</p>
                 <p className="text-xs leading-relaxed" style={{ color: "var(--color-muted-light)" }}>{q.answer}</p>
-                {q.explanation && <p className="text-[11px] text-muted mt-1.5 italic">{q.explanation}</p>}
+                {q.explanation && <p className="text-[13px] text-muted mt-1.5 italic">{q.explanation}</p>}
               </div>
             )}
           </div>

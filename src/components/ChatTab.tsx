@@ -306,18 +306,18 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
                 </p>
                 <button
                   onClick={(e) => deleteSession(s.id, e)}
-                  className="text-muted hover:text-danger text-[10px] opacity-0 group-hover:opacity-100 shrink-0"
+                  className="text-muted hover:text-danger text-[12px] opacity-0 group-hover:opacity-100 shrink-0"
                 >
                   x
                 </button>
               </div>
-              <p className="text-[10px] text-muted mt-1">
+              <p className="text-[12px] text-muted mt-1">
                 {s.messageCount} msgs · {new Date(s.date).toLocaleDateString()}
               </p>
             </div>
           ))}
           {!sessions.length && (
-            <p className="text-[10px] text-muted text-center py-4">{T("chat.no_conversations")}</p>
+            <p className="text-[12px] text-muted text-center py-4">{T("chat.no_conversations")}</p>
           )}
         </div>
       </div>
@@ -419,7 +419,7 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
 
                 {isLastAssistant && m.followUps && m.followUps.length > 0 && (
                   <div className="mt-2 max-w-[80%]">
-                    <p className="text-[10px] text-muted uppercase tracking-wider mb-1.5">{T("chat.where_next")}</p>
+                    <p className="text-[12px] text-muted uppercase tracking-wider mb-1.5">{T("chat.where_next")}</p>
                     <div className="flex flex-col gap-1.5">
                       {m.followUps.map((q, qi) => (
                         <button
@@ -464,13 +464,13 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
               />
               <button
                 onClick={() => setPendingImage(null)}
-                className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center text-white"
+                className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[12px] font-bold flex items-center justify-center text-white"
                 style={{ background: "var(--color-muted)" }}
               >
                 ✕
               </button>
             </div>
-            <span className="text-[11px] text-muted">Photo attached — ask a question about it</span>
+            <span className="text-[13px] text-muted">Photo attached — ask a question about it</span>
           </div>
         )}
 

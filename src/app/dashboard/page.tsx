@@ -54,14 +54,14 @@ function UserCreditsTab({ color, lang }: { color: string; lang: Lang }) {
       <div className="bg-bg-card border border-border rounded-2xl p-6 mb-6">
         <div className="flex items-end justify-between mb-4">
           <div>
-            <p className="text-[11px] text-muted uppercase tracking-widest mb-1">Credits Remaining</p>
+            <p className="text-[13px] text-muted uppercase tracking-widest mb-1">Credits Remaining</p>
             <p className="font-serif text-4xl font-bold" style={{ color: barColor }}>
               ${remaining.toFixed(2)}
             </p>
             <p className="text-xs text-muted mt-1">of ${data.creditsGranted.toFixed(2)} allocated</p>
           </div>
           <div className="text-right">
-            <p className="text-[11px] text-muted uppercase tracking-widest mb-1">Total Used</p>
+            <p className="text-[13px] text-muted uppercase tracking-widest mb-1">Total Used</p>
             <p className="text-2xl font-bold font-serif text-accent">${data.creditsUsed.toFixed(4)}</p>
             <p className="text-xs text-muted mt-1">{data.totalCalls} API calls</p>
           </div>
@@ -74,8 +74,8 @@ function UserCreditsTab({ color, lang }: { color: string; lang: Lang }) {
           />
         </div>
         <div className="flex justify-between mt-1.5">
-          <span className="text-[10px] text-muted">{pct.toFixed(1)}% used</span>
-          <span className="text-[10px] text-muted">{(100 - pct).toFixed(1)}% remaining</span>
+          <span className="text-[12px] text-muted">{pct.toFixed(1)}% used</span>
+          <span className="text-[12px] text-muted">{(100 - pct).toFixed(1)}% remaining</span>
         </div>
       </div>
 
@@ -91,7 +91,7 @@ function UserCreditsTab({ color, lang }: { color: string; lang: Lang }) {
                     <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
                       {ACTION_LABELS[action] || action.replace(/_/g, " ")}
                     </p>
-                    <p className="text-[10px] text-muted">{stats.count} calls</p>
+                    <p className="text-[12px] text-muted">{stats.count} calls</p>
                   </div>
                   <p className="text-sm font-bold" style={{ color }}>${stats.cost.toFixed(4)}</p>
                 </div>
@@ -110,7 +110,7 @@ function UserCreditsTab({ color, lang }: { color: string; lang: Lang }) {
                   <p className="text-xs font-medium" style={{ color: "var(--color-text)" }}>
                     {ACTION_LABELS[log.action] || log.action.replace(/_/g, " ")}
                   </p>
-                  <p className="text-[10px] text-muted">{new Date(log.createdAt).toLocaleString()}</p>
+                  <p className="text-[12px] text-muted">{new Date(log.createdAt).toLocaleString()}</p>
                 </div>
                 <p className="text-xs font-semibold text-muted">${log.costUsd.toFixed(5)}</p>
               </div>
@@ -186,7 +186,7 @@ function CourseSelector({
             >
               <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: c.color }} />
               <span className="font-medium">{c.name}</span>
-              {c.id === activeId && <span className="ml-auto text-[10px]">✓</span>}
+              {c.id === activeId && <span className="ml-auto text-[12px]">✓</span>}
             </button>
           ))}
         </div>
@@ -225,7 +225,7 @@ function LangPicker({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => voi
       >
         <span className="text-base leading-none">{meta.flag}</span>
         <span className="hidden sm:inline" style={{ color: "var(--color-muted-light)" }}>{meta.label}</span>
-        <span className="text-[10px]" style={{ color: "var(--color-muted)" }}>▾</span>
+        <span className="text-[12px]" style={{ color: "var(--color-muted)" }}>▾</span>
       </button>
 
       {open && (
@@ -250,7 +250,7 @@ function LangPicker({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => voi
             >
               <span className="text-base leading-none">{l.flag}</span>
               <span className="font-medium">{l.label}</span>
-              {l.code === lang && <span className="ml-auto text-[10px]">✓</span>}
+              {l.code === lang && <span className="ml-auto text-[12px]">✓</span>}
             </button>
           ))}
         </div>

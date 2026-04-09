@@ -110,7 +110,7 @@ export default function WorkLabTab({ courseId, color, name, lang = "en" }: Props
               ⚗️ {T("worklab.title")}
             </h2>
             <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
+              className="text-[12px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
               style={{ background: color + "20", color }}
             >
               Experimental
@@ -123,7 +123,7 @@ export default function WorkLabTab({ courseId, color, name, lang = "en" }: Props
           {/* Framework input */}
           <div className="bg-bg-card border border-border rounded-2xl p-5 mb-4">
             <h3 className="text-sm font-bold mb-1">{T("worklab.framework_label")}</h3>
-            <p className="text-[11px] text-muted mb-3">
+            <p className="text-[13px] text-muted mb-3">
               Which framework should the AI apply to your data?
             </p>
             <input
@@ -138,7 +138,7 @@ export default function WorkLabTab({ courseId, color, name, lang = "en" }: Props
                 <button
                   key={chip}
                   onClick={() => setFramework(chip)}
-                  className="px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-all"
+                  className="px-3 py-1.5 rounded-lg text-[13px] font-medium border transition-all"
                   style={{
                     background: framework === chip ? color + "20" : "var(--color-bg)",
                     borderColor: framework === chip ? color : "var(--color-border)",
@@ -154,7 +154,7 @@ export default function WorkLabTab({ courseId, color, name, lang = "en" }: Props
           {/* Data input */}
           <div className="bg-bg-card border border-border rounded-2xl p-5 mb-5">
             <h3 className="text-sm font-bold mb-1">{T("worklab.data_label")}</h3>
-            <p className="text-[11px] text-muted mb-3">
+            <p className="text-[13px] text-muted mb-3">
               Paste your data below. <span className="font-semibold" style={{ color: "#F59E0B" }}>Remove all names, company names, and identifying information before submitting.</span>
             </p>
             <textarea

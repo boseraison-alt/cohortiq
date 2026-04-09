@@ -68,7 +68,7 @@ export default function ThemePicker() {
         >
           {/* Dark section */}
           <div className="px-3 pt-2.5 pb-1">
-            <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--color-muted)" }}>
+            <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--color-muted)" }}>
               Dark
             </p>
             <div className="grid grid-cols-5 gap-1.5">
@@ -91,7 +91,7 @@ export default function ThemePicker() {
                     <span className="w-2" style={{ background: theme.swatches[1] }} />
                   </span>
                   <span
-                    className="text-[9px] font-medium leading-none"
+                    className="text-[13px] font-medium leading-none"
                     style={{ color: current === theme.id ? theme.swatches[2] : "var(--color-muted)" }}
                   >
                     {theme.label}
@@ -108,7 +108,7 @@ export default function ThemePicker() {
 
           {/* Light section */}
           <div className="px-3 pb-2.5 pt-1">
-            <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--color-muted)" }}>
+            <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--color-muted)" }}>
               Light
             </p>
             <div className="grid grid-cols-4 gap-1.5">
@@ -131,7 +131,7 @@ export default function ThemePicker() {
                     <span className="w-2" style={{ background: theme.swatches[1] }} />
                   </span>
                   <span
-                    className="text-[9px] font-medium leading-none"
+                    className="text-[13px] font-medium leading-none"
                     style={{ color: current === theme.id ? theme.swatches[2] : "var(--color-muted)" }}
                   >
                     {theme.label}

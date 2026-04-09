@@ -132,7 +132,7 @@ export default function FlashcardsTab({ courseId, color, lang = "en" }: Props) {
           <button
             key={m}
             onClick={() => m === "study" ? enterStudyMode() : setMode("browse")}
-            className="px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all"
+            className="px-3 py-1.5 rounded-lg text-[13px] font-semibold border transition-all"
             style={{
               background: mode === m ? color + "20" : "var(--color-bg)",
               borderColor: mode === m ? color : "var(--color-border)",
@@ -143,7 +143,7 @@ export default function FlashcardsTab({ courseId, color, lang = "en" }: Props) {
               <span className="flex items-center gap-1.5">
                 {T("cards.study_mode")}
                 {dueCards.length > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold"
+                  <span className="px-1.5 py-0.5 rounded-full text-[13px] font-bold"
                     style={{ background: color, color: "#fff" }}>
                     {dueCards.length}
                   </span>
@@ -152,7 +152,7 @@ export default function FlashcardsTab({ courseId, color, lang = "en" }: Props) {
             )}
           </button>
         ))}
-        <span className="ml-auto text-[10px] text-muted italic">Powered by Spaced Repetition (SM-2) — cards you struggle with reappear sooner</span>
+        <span className="ml-auto text-[12px] text-muted italic">Powered by Spaced Repetition (SM-2) — cards you struggle with reappear sooner</span>
       </div>
 
       {/* ── STUDY MODE ── */}
@@ -174,11 +174,11 @@ export default function FlashcardsTab({ courseId, color, lang = "en" }: Props) {
               <p className="text-xs text-muted mb-4">
                 {T("cards.study_mode")} · {dueIdx + 1} / {dueCards.length}
                 {dueCard.isNew && (
-                  <span className="ml-2 px-1.5 py-0.5 rounded text-[9px] font-bold"
+                  <span className="ml-2 px-1.5 py-0.5 rounded text-[13px] font-bold"
                     style={{ background: "#7B6CF620", color: "#7B6CF6" }}>NEW</span>
                 )}
                 {dueCard.topic && (
-                  <span className="ml-2 px-1.5 py-0.5 rounded text-[9px] font-bold"
+                  <span className="ml-2 px-1.5 py-0.5 rounded text-[13px] font-bold"
                     style={{ background: color + "20", color }}>
                     {dueCard.topic}
                   </span>
@@ -194,7 +194,7 @@ export default function FlashcardsTab({ courseId, color, lang = "en" }: Props) {
                   border: `2px solid ${dueFlip ? color + "50" : "var(--color-border)"}`,
                 }}
               >
-                <p className="text-[9px] uppercase tracking-widest mb-3"
+                <p className="text-[13px] uppercase tracking-widest mb-3"
                   style={{ color: dueFlip ? color : "var(--color-muted)" }}>
                   {dueFlip ? T("cards.back") : T("cards.front")}
                 </p>
@@ -202,7 +202,7 @@ export default function FlashcardsTab({ courseId, color, lang = "en" }: Props) {
                   style={{ color: "var(--color-text)" }}>
                   {dueFlip ? dueCard.back : dueCard.front}
                 </p>
-                <p className="text-[10px] text-muted mt-4">
+                <p className="text-[12px] text-muted mt-4">
                   {dueFlip ? `↩ ${T("cards.front")}` : `↻ ${T("cards.flip")}`}
                 </p>
               </div>
@@ -224,7 +224,7 @@ export default function FlashcardsTab({ courseId, color, lang = "en" }: Props) {
                 </div>
               )}
               {!dueFlip && (
-                <p className="text-[10px] text-muted mt-4">Tap card to reveal answer, then rate yourself</p>
+                <p className="text-[12px] text-muted mt-4">Tap card to reveal answer, then rate yourself</p>
               )}
             </>
           ) : (
@@ -259,7 +259,7 @@ export default function FlashcardsTab({ courseId, color, lang = "en" }: Props) {
               <>
                 <span className="text-xs text-muted">{cards.length} total</span>
                 <button onClick={clearAll}
-                  className="bg-bg-raised border border-border-light rounded px-3 py-1.5 text-[11px] text-muted">
+                  className="bg-bg-raised border border-border-light rounded px-3 py-1.5 text-[13px] text-muted">
                   {T("cards.clear")}
                 </button>
               </>
@@ -268,7 +268,7 @@ export default function FlashcardsTab({ courseId, color, lang = "en" }: Props) {
 
           {/* Row 2: topic selector */}
           <div className="flex items-start gap-3 flex-wrap">
-            <span className="text-[10px] text-muted uppercase tracking-wider mt-2 shrink-0">Topic:</span>
+            <span className="text-[12px] text-muted uppercase tracking-wider mt-2 shrink-0">Topic:</span>
 
             <button
               onClick={() => { setTopicMode("random"); setCustomTopic(""); }}
@@ -312,7 +312,7 @@ export default function FlashcardsTab({ courseId, color, lang = "en" }: Props) {
                       <button
                         key={topic}
                         onClick={() => setCustomTopic(topic)}
-                        className="px-2.5 py-1 rounded-lg text-[10px] font-medium border transition-all"
+                        className="px-2.5 py-1 rounded-lg text-[12px] font-medium border transition-all"
                         style={{
                           background: customTopic === topic ? color + "20" : "var(--color-bg)",
                           borderColor: customTopic === topic ? color : "var(--color-border)",
@@ -345,7 +345,7 @@ export default function FlashcardsTab({ courseId, color, lang = "en" }: Props) {
                 </p>
                 {card?.topic && (
                   <span
-                    className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                    className="text-[13px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
                     style={{ background: color + "20", color }}
                   >
                     {card.topic}
@@ -361,14 +361,14 @@ export default function FlashcardsTab({ courseId, color, lang = "en" }: Props) {
                   border: `2px solid ${flip ? color + "50" : "var(--color-border)"}`,
                 }}
               >
-                <p className="text-[9px] uppercase tracking-widest mb-3" style={{ color: flip ? color : "var(--color-muted)" }}>
+                <p className="text-[13px] uppercase tracking-widest mb-3" style={{ color: flip ? color : "var(--color-muted)" }}>
                   {flip ? T("cards.back") : T("cards.front")}
                 </p>
                 <p className={`leading-relaxed ${flip ? "text-sm" : "text-lg font-serif font-semibold"}`}
                   style={{ color: "var(--color-text)" }}>
                   {flip ? card?.back : card?.front}
                 </p>
-                <p className="text-[10px] text-muted mt-4">
+                <p className="text-[12px] text-muted mt-4">
                   {flip ? `↩ ${T("cards.front")}` : `↻ ${T("cards.flip")}`}
                 </p>
               </div>
@@ -411,11 +411,11 @@ export default function FlashcardsTab({ courseId, color, lang = "en" }: Props) {
                 const rColor = r.rating === 3 ? "#4CAF50" : r.rating === 2 ? color : r.rating === 1 ? "#FFA726" : "#EF5350";
                 return (
                   <div key={i} className="flex items-center gap-3 bg-bg-card border border-border rounded-lg px-3 py-2 text-xs">
-                    <span className="text-[10px] font-mono text-muted shrink-0 w-16">{new Date(r.date).toLocaleDateString()}</span>
+                    <span className="text-[12px] font-mono text-muted shrink-0 w-16">{new Date(r.date).toLocaleDateString()}</span>
                     <span className="flex-1 truncate text-muted-light">{r.front}</span>
-                    {r.topic && <span className="text-[9px] px-1.5 py-0.5 rounded font-bold shrink-0" style={{ background: color + "15", color }}>{r.topic}</span>}
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0" style={{ background: rColor + "18", color: rColor }}>{r.ratingLabel}</span>
-                    <span className="text-[9px] font-mono text-muted shrink-0">+{r.interval}d</span>
+                    {r.topic && <span className="text-[13px] px-1.5 py-0.5 rounded font-bold shrink-0" style={{ background: color + "15", color }}>{r.topic}</span>}
+                    <span className="text-[12px] font-semibold px-2 py-0.5 rounded-full shrink-0" style={{ background: rColor + "18", color: rColor }}>{r.ratingLabel}</span>
+                    <span className="text-[13px] font-mono text-muted shrink-0">+{r.interval}d</span>
                   </div>
                 );
               })}

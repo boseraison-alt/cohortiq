@@ -380,7 +380,7 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
             <span className="text-xs font-medium" style={{ color }}>
               {phase === "script" ? T("pod.step1") : T("pod.step2")}
             </span>
-            <span className="text-[10px] text-muted">{formatTime(elapsed)} {T("pod.elapsed")}</span>
+            <span className="text-[12px] text-muted">{formatTime(elapsed)} {T("pod.elapsed")}</span>
             <button onClick={abortGeneration}
               className="ml-auto rounded-lg px-4 py-1.5 text-xs font-semibold text-[#EF5350] bg-[#EF5350]/15 border border-[#EF5350]/30 hover:bg-[#EF5350]/25 transition-all">
               {T("pod.abort")}
@@ -391,8 +391,8 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
               style={{ width: `${progressPct}%`, background: `linear-gradient(90deg, ${color}, ${color}AA)` }} />
           </div>
           <div className="flex items-center justify-between mt-1.5">
-            <span className="text-[10px] text-muted">{progress}</span>
-            <span className="text-[10px] text-muted">{getTimeRemaining()}</span>
+            <span className="text-[12px] text-muted">{progress}</span>
+            <span className="text-[12px] text-muted">{getTimeRemaining()}</span>
           </div>
         </div>
       )}
@@ -418,7 +418,7 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
                 style={{ background: "#10A37F" }}>
                 {T("pod.gen_audio")}
               </button>
-              <span className="text-[10px] text-muted ml-auto">
+              <span className="text-[12px] text-muted ml-auto">
                 {estimatedChars.toLocaleString()} chars · ~${estimatedCost.toFixed(2)}
               </span>
             </div>
@@ -440,13 +440,13 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
                       style={{ width: `${pct}%`, background: "#10A37F" }} />
                   </div>
                   <div className="flex justify-between mt-1.5">
-                    <span className="text-[11px] text-muted tabular-nums">{fmtSec(Math.round(playElapsed))}</span>
+                    <span className="text-[13px] text-muted tabular-nums">{fmtSec(Math.round(playElapsed))}</span>
                     {playing && (
-                      <span className="text-[11px] font-semibold tabular-nums" style={{ color: "#10A37F" }}>
+                      <span className="text-[13px] font-semibold tabular-nums" style={{ color: "#10A37F" }}>
                         -{fmtSec(remainSec)}
                       </span>
                     )}
-                    <span className="text-[11px] text-muted tabular-nums">{fmtSec(totalSec)}</span>
+                    <span className="text-[13px] text-muted tabular-nums">{fmtSec(totalSec)}</span>
                   </div>
                 </div>
 
@@ -498,7 +498,7 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
                   <div className="flex items-center gap-0.5 ml-2">
                     {[1, 1.25, 1.5, 2].map((r) => (
                       <button key={r} onClick={() => changeSpeed(r)}
-                        className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all"
+                        className="px-2.5 py-1.5 rounded-lg text-[13px] font-bold transition-all"
                         style={{
                           background: playbackRate === r ? "#10A37F20" : "transparent",
                           color: playbackRate === r ? "#10A37F" : "var(--color-muted)",
@@ -510,7 +510,7 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
                   </div>
 
                   {/* Info — right side */}
-                  <div className="ml-auto flex items-center gap-3 text-[11px] text-muted">
+                  <div className="ml-auto flex items-center gap-3 text-[13px] text-muted">
                     {playing && currentSegIdx >= 0 && (
                       <span className="tabular-nums">
                         {currentSegIdx + 1}/{audioSegments.length} segs
@@ -529,7 +529,7 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
         {/* Saved list */}
         {saved.length > 0 && (
           <div className="w-52 border-r border-border overflow-y-auto px-2 py-2 shrink-0">
-            <p className="text-[10px] text-muted uppercase tracking-wider px-2 mb-2">{T("common.saved")}</p>
+            <p className="text-[12px] text-muted uppercase tracking-wider px-2 mb-2">{T("common.saved")}</p>
             {saved.map((p) => {
               const isActive = activePodcastId === p.id;
               return (
@@ -544,11 +544,11 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
                     <p className="text-xs font-semibold truncate" style={{ color: isActive ? color : "var(--color-muted-light)" }}>
                       {p.topic || T("pod.entire_course")}
                     </p>
-                    <p className="text-[10px] text-muted mt-0.5">
+                    <p className="text-[12px] text-muted mt-0.5">
                       {p.duration} min · {new Date(p.createdAt).toLocaleDateString()}
                     </p>
                     {p.audioUrl && (
-                      <p className="text-[9px] mt-0.5" style={{ color: "#10A37F" }}>▶ audio saved</p>
+                      <p className="text-[13px] mt-0.5" style={{ color: "#10A37F" }}>▶ audio saved</p>
                     )}
                   </div>
                   <div className="px-3 pb-2" onClick={(e) => e.stopPropagation()}>
@@ -591,7 +591,7 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
                   <button
                     onClick={() => setTopic("")}
                     disabled={generating}
-                    className="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all border flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all border flex items-center gap-1"
                     style={{
                       background: topic === "" ? color + "20" : "var(--color-bg)",
                       borderColor: topic === "" ? color : "var(--color-border)",
@@ -606,7 +606,7 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
                       key={t}
                       onClick={() => setTopic(t)}
                       disabled={generating}
-                      className="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all border"
+                      className="px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all border"
                       style={{
                         background: topic === t ? color + "20" : "var(--color-bg)",
                         borderColor: topic === t ? color : "var(--color-border)",
@@ -619,7 +619,7 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
                 </div>
                 {topic && (
                   <div className="mt-2 text-center">
-                    <button onClick={() => setTopic("")} className="text-[10px] text-muted hover:text-muted-light">
+                    <button onClick={() => setTopic("")} className="text-[12px] text-muted hover:text-muted-light">
                       {T("pod.clear_topic")}
                     </button>
                   </div>
@@ -639,19 +639,19 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
                 >
                   <p className="text-base mb-1">💬</p>
                   <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>{T("pod.conversation")}</p>
-                  <p className="text-[11px] text-muted mt-1 leading-relaxed">{T("pod.conv_desc")}</p>
+                  <p className="text-[13px] text-muted mt-1 leading-relaxed">{T("pod.conv_desc")}</p>
                   <div className="mt-3 space-y-1.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color }}>PROF · Onyx</span>
-                      <span className="text-[10px] text-muted">{T("pod.explains")}</span>
+                      <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color }}>PROF · Onyx</span>
+                      <span className="text-[12px] text-muted">{T("pod.explains")}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#6BA39E]">ALEX · Nova</span>
-                      <span className="text-[10px] text-muted">{T("pod.asks")}</span>
+                      <span className="text-[12px] font-bold uppercase tracking-wider text-[#6BA39E]">ALEX · Nova</span>
+                      <span className="text-[12px] text-muted">{T("pod.asks")}</span>
                     </div>
                   </div>
                   {style === "conversation" && (
-                    <p className="mt-3 text-[10px] font-semibold" style={{ color }}>{T("pod.selected")}</p>
+                    <p className="mt-3 text-[12px] font-semibold" style={{ color }}>{T("pod.selected")}</p>
                   )}
                 </button>
 
@@ -666,15 +666,15 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
                 >
                   <p className="text-base mb-1">🎓</p>
                   <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>{T("pod.lecture")}</p>
-                  <p className="text-[11px] text-muted mt-1 leading-relaxed">{T("pod.lec_desc")}</p>
+                  <p className="text-[13px] text-muted mt-1 leading-relaxed">{T("pod.lec_desc")}</p>
                   <div className="mt-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color }}>PROF · Onyx</span>
-                      <span className="text-[10px] text-muted">{T("pod.solo")}</span>
+                      <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color }}>PROF · Onyx</span>
+                      <span className="text-[12px] text-muted">{T("pod.solo")}</span>
                     </div>
                   </div>
                   {style === "lecture" && (
-                    <p className="mt-3 text-[10px] font-semibold" style={{ color }}>{T("pod.selected")}</p>
+                    <p className="mt-3 text-[12px] font-semibold" style={{ color }}>{T("pod.selected")}</p>
                   )}
                 </button>
               </div>
@@ -713,7 +713,7 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
               </div>
 
               {/* Pricing note */}
-              <p className="mt-4 text-[10px] text-muted">
+              <p className="mt-4 text-[12px] text-muted">
                 OpenAI TTS ~$0.015 per 1K chars · 10 min ≈ $0.15 · 30 min ≈ $0.45
               </p>
             </div>
@@ -735,7 +735,7 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
                 background: currentLine === i ? color + "15" : "transparent",
                 border: currentLine === i ? `1px solid ${color}30` : "1px solid transparent",
               }}>
-              <span className="text-[10px] font-bold tracking-wider min-w-[38px] pt-0.5"
+              <span className="text-[12px] font-bold tracking-wider min-w-[38px] pt-0.5"
                 style={{ color: line.host === "PROF" ? color : "#6BA39E" }}>
                 {line.host}
               </span>

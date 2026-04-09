@@ -203,7 +203,7 @@ function VideoCard({
           <div className="w-10 h-10 rounded-full flex items-center justify-center text-base font-bold shadow-lg"
             style={{ background: color, color: "#fff" }}>▶</div>
         </div>
-        <span className="absolute top-2 left-2 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+        <span className="absolute top-2 left-2 text-[13px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
           style={{ background: color + "CC", color: "#fff" }}>
           {typeLabel[type] || type}
         </span>
@@ -220,13 +220,13 @@ function VideoCard({
           {video.title.replace(/^(Presentation|Narration): ?/, "")}
         </p>
         {video.description && (
-          <p className="text-[11px] text-muted leading-relaxed line-clamp-1 mb-1">{video.description}</p>
+          <p className="text-[13px] text-muted leading-relaxed line-clamp-1 mb-1">{video.description}</p>
         )}
         <div className="flex items-center justify-between mt-1">
           {video.fileSize ? (
-            <span className="text-[9px] text-muted">{formatBytes(video.fileSize)}</span>
+            <span className="text-[13px] text-muted">{formatBytes(video.fileSize)}</span>
           ) : <span />}
-          <span className="text-[9px] text-muted">{new Date(video.createdAt).toLocaleDateString()}</span>
+          <span className="text-[13px] text-muted">{new Date(video.createdAt).toLocaleDateString()}</span>
         </div>
         <div onClick={(e) => e.stopPropagation()}>
           <ThumbsRating
@@ -321,11 +321,11 @@ function AnnotatedVideoPlayer({
           <h2 className="font-serif text-sm font-bold truncate" style={{ color: "var(--color-text)" }}>
             {video.title.replace(/^(Presentation|Narration): ?/, "")}
           </h2>
-          {video.description && <p className="text-[11px] text-muted mt-0.5 line-clamp-1">{video.description}</p>}
+          {video.description && <p className="text-[13px] text-muted mt-0.5 line-clamp-1">{video.description}</p>}
         </div>
         <div className="flex items-center gap-2 ml-3 shrink-0">
           <a href={video.url} download={video.fileName || true}
-            className="inline-flex items-center gap-1 text-[10px] rounded-lg px-2.5 py-1.5 font-semibold border transition-all"
+            className="inline-flex items-center gap-1 text-[12px] rounded-lg px-2.5 py-1.5 font-semibold border transition-all"
             style={{ borderColor: color + "40", color, background: color + "10" }}>
             {T("vid.download")}
           </a>
@@ -348,7 +348,7 @@ function AnnotatedVideoPlayer({
           </div>
           {/* Slide timeline */}
           <div className="px-3 py-2 border-t" style={{ borderColor: "var(--color-border)" }}>
-            <p className="text-[9px] text-muted mb-1.5">{T("vid.slides_panel")} — {T("vid.click_to_seek")}</p>
+            <p className="text-[13px] text-muted mb-1.5">{T("vid.slides_panel")} — {T("vid.click_to_seek")}</p>
             <div className="flex gap-0.5 w-full">
               {slides.map((s, i) => (
                 <button
@@ -375,7 +375,7 @@ function AnnotatedVideoPlayer({
 
         {/* Right: slide panel */}
         <div className="w-64 shrink-0 border-l overflow-y-auto" style={{ borderColor: "var(--color-border)", background: "var(--color-bg)" }}>
-          <p className="px-3 pt-3 pb-2 text-[10px] font-bold uppercase tracking-widest" style={{ color }}>
+          <p className="px-3 pt-3 pb-2 text-[12px] font-bold uppercase tracking-widest" style={{ color }}>
             {T("vid.slides_panel")} ({slides.length})
           </p>
           {slides.map((s, i) => (
@@ -389,18 +389,18 @@ function AnnotatedVideoPlayer({
                 }}
               >
                 <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-[9px] font-bold px-1 py-0.5 rounded"
+                  <span className="text-[13px] font-bold px-1 py-0.5 rounded"
                     style={{ background: color + "20", color }}>{i + 1}</span>
-                  <p className="text-[11px] font-semibold leading-tight line-clamp-2" style={{ color: "var(--color-text)" }}>
+                  <p className="text-[13px] font-semibold leading-tight line-clamp-2" style={{ color: "var(--color-text)" }}>
                     {s.title}
                   </p>
                 </div>
                 <div className="space-y-0.5 ml-5">
                   {s.points.slice(0, 2).map((p, pi) => (
-                    <p key={pi} className="text-[9px] text-muted leading-tight">• {p}</p>
+                    <p key={pi} className="text-[13px] text-muted leading-tight">• {p}</p>
                   ))}
                   {s.points.length > 2 && (
-                    <p className="text-[9px] text-muted opacity-50">+{s.points.length - 2} more</p>
+                    <p className="text-[13px] text-muted opacity-50">+{s.points.length - 2} more</p>
                   )}
                 </div>
               </button>
@@ -413,32 +413,32 @@ function AnnotatedVideoPlayer({
                         value={question}
                         onChange={(e) => setQuestion(e.target.value)}
                         placeholder={T("vid.ask_ph")}
-                        className="flex-1 bg-bg-card border border-border-light rounded px-2 py-1 text-[10px] outline-none"
+                        className="flex-1 bg-bg-card border border-border-light rounded px-2 py-1 text-[12px] outline-none"
                         style={{ color: "var(--color-text)" }}
                         onKeyDown={(e) => e.key === "Enter" && askAboutSlide(i)}
                       />
                       <button
                         onClick={() => askAboutSlide(i)}
                         disabled={asking || !question.trim()}
-                        className="px-2 py-1 rounded text-[9px] font-bold text-white disabled:opacity-40"
+                        className="px-2 py-1 rounded text-[13px] font-bold text-white disabled:opacity-40"
                         style={{ background: color }}>
                         {asking ? "…" : "Ask"}
                       </button>
                     </div>
-                    {asking && <p className="text-[9px] text-muted mt-1 animate-pulse">{T("vid.asking")}</p>}
+                    {asking && <p className="text-[13px] text-muted mt-1 animate-pulse">{T("vid.asking")}</p>}
                     {answer && (
-                      <div className="mt-2 bg-bg-card border border-border rounded-lg px-2.5 py-2 text-[10px] leading-relaxed max-h-40 overflow-y-auto"
+                      <div className="mt-2 bg-bg-card border border-border rounded-lg px-2.5 py-2 text-[12px] leading-relaxed max-h-40 overflow-y-auto"
                         style={{ color: "var(--color-text)" }}>
                         {answer}
                       </div>
                     )}
                     <button onClick={() => { setAskSlide(null); setQuestion(""); setAnswer(""); }}
-                      className="text-[9px] text-muted mt-1 hover:text-muted-light">✕ Close</button>
+                      className="text-[13px] text-muted mt-1 hover:text-muted-light">✕ Close</button>
                   </div>
                 ) : (
                   <button
                     onClick={() => { setAskSlide(i); setQuestion(""); setAnswer(""); }}
-                    className="text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-all hover:opacity-80 w-full"
+                    className="text-[13px] font-semibold px-2.5 py-1 rounded-lg border transition-all hover:opacity-80 w-full"
                     style={{ color, borderColor: color + "50", background: color + "12" }}>
                     💬 {T("vid.ask_slide")}
                   </button>
@@ -471,13 +471,13 @@ function VideoPlayer({
             {video.title.replace(/^(Presentation|Narration): ?/, "")}
           </h2>
           {video.description && (
-            <p className="text-[11px] text-muted mt-0.5 line-clamp-1">{video.description}</p>
+            <p className="text-[13px] text-muted mt-0.5 line-clamp-1">{video.description}</p>
           )}
         </div>
         <div className="flex items-center gap-2 ml-3 shrink-0">
           {isDirectVideo && (
             <a href={video.url} download={video.fileName || true}
-              className="inline-flex items-center gap-1 text-[10px] rounded-lg px-2.5 py-1.5 font-semibold border transition-all"
+              className="inline-flex items-center gap-1 text-[12px] rounded-lg px-2.5 py-1.5 font-semibold border transition-all"
               style={{ borderColor: color + "40", color, background: color + "10" }}>
               {t("vid.download", lang)}
             </a>
@@ -676,12 +676,12 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
         </div>
 
         {/* Folders */}
-        <p className="px-4 pt-4 pb-2 text-[10px] font-bold uppercase tracking-widest" style={{ color }}>
+        <p className="px-4 pt-4 pb-2 text-[12px] font-bold uppercase tracking-widest" style={{ color }}>
           {T("vid.folders")}
         </p>
 
         {loadingVideos ? (
-          <p className="px-4 text-[10px] text-muted py-2">{T("common.loading")}</p>
+          <p className="px-4 text-[12px] text-muted py-2">{T("common.loading")}</p>
         ) : folders.map((folder) => {
           const isActive = folder.key === activeFolder;
           return (
@@ -698,13 +698,13 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
                   {folder.label}
                 </p>
                 {folder.key !== "__all__" && (
-                  <p className="text-[10px] text-muted mt-0.5">
+                  <p className="text-[12px] text-muted mt-0.5">
                     {folder.videos.length} video{folder.videos.length !== 1 ? "s" : ""}
                   </p>
                 )}
               </div>
               {folder.key !== "__all__" && (
-                <span className="text-[9px] font-bold rounded-full w-5 h-5 flex items-center justify-center shrink-0"
+                <span className="text-[13px] font-bold rounded-full w-5 h-5 flex items-center justify-center shrink-0"
                   style={{ background: isActive ? color + "30" : "var(--color-border)", color: isActive ? color : "var(--color-muted)" }}>
                   {folder.videos.length}
                 </span>
@@ -727,9 +727,9 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
                   style={{ borderColor: `${color} transparent transparent transparent` }} />
               </div>
               <p className="text-xs font-semibold" style={{ color }}>{statusMsg}</p>
-              <span className="text-[10px] text-muted ml-auto">{timeRemaining()}</span>
+              <span className="text-[12px] text-muted ml-auto">{timeRemaining()}</span>
               <button onClick={abort}
-                className="rounded px-2.5 py-1 text-[10px] font-semibold text-[#EF5350] bg-[#EF5350]/10 border border-[#EF5350]/30 hover:bg-[#EF5350]/20 transition-all ml-2">
+                className="rounded px-2.5 py-1 text-[12px] font-semibold text-[#EF5350] bg-[#EF5350]/10 border border-[#EF5350]/30 hover:bg-[#EF5350]/20 transition-all ml-2">
                 {T("vid.abort")}
               </button>
             </div>
@@ -737,10 +737,10 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
               <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: color }} />
             </div>
             <div className="flex justify-between mt-0.5">
-              <span className="text-[9px] text-muted">
+              <span className="text-[13px] text-muted">
                 {phase === "slides" ? T("vid.phase1") : T("vid.phase2")}
               </span>
-              <span className="text-[9px] text-muted">{Math.round(progress)}%</span>
+              <span className="text-[13px] text-muted">{Math.round(progress)}%</span>
             </div>
           </div>
         )}
@@ -755,7 +755,7 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
             {errorMsg && (
               <div className="max-w-2xl mb-4 bg-[#EF5350]/10 border border-[#EF5350]/30 rounded-xl px-4 py-3">
                 <p className="text-xs text-[#EF5350] font-semibold">Error: {errorMsg}</p>
-                <button onClick={() => setErrorMsg("")} className="text-[10px] text-[#EF5350]/70 mt-1 hover:text-[#EF5350]">Dismiss</button>
+                <button onClick={() => setErrorMsg("")} className="text-[12px] text-[#EF5350]/70 mt-1 hover:text-[#EF5350]">Dismiss</button>
               </div>
             )}
 
@@ -766,7 +766,7 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
                   <span className="text-2xl">🎬</span>
                   <div>
                     <p className="font-serif text-base font-bold text-muted-light">{T("vid.gen_title")}</p>
-                    <p className="text-[11px] text-muted mt-0.5">
+                    <p className="text-[13px] text-muted mt-0.5">
                       {T("vid.gen_subtitle")}
                     </p>
                   </div>
@@ -774,7 +774,7 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
 
                 <div className="flex gap-3 flex-wrap items-end">
                   <div className="flex-1 min-w-[240px]">
-                    <label className="text-[10px] text-muted uppercase tracking-wider block mb-1.5">{T("vid.topic")}</label>
+                    <label className="text-[12px] text-muted uppercase tracking-wider block mb-1.5">{T("vid.topic")}</label>
                     <textarea
                       value={topic} onChange={(e) => setTopic(e.target.value)}
                       placeholder={T("vid.topic_ph")}
@@ -785,7 +785,7 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
                   </div>
 
                   <div>
-                    <label className="text-[10px] text-muted uppercase tracking-wider block mb-1.5">{T("vid.duration")}</label>
+                    <label className="text-[12px] text-muted uppercase tracking-wider block mb-1.5">{T("vid.duration")}</label>
                     <div className="flex gap-1 flex-wrap">
                       {[5, 10, 15, 20, 25, 30].map((n) => (
                         <button key={n} onClick={() => setDuration(n)}
@@ -813,23 +813,23 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
             {/* Generating — slide preview */}
             {slides.length > 0 && generating && (
               <div className="max-w-2xl">
-                <p className="text-[10px] text-muted uppercase tracking-wider mb-3">
+                <p className="text-[12px] text-muted uppercase tracking-wider mb-3">
                   {slides.length} Slides — {phase === "slides" ? T("vid.creating") : T("vid.rend_short")}
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {slides.map((s, i) => (
                     <div key={i} className="bg-bg-card border border-border rounded-lg px-3 py-2.5">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                        <span className="text-[12px] font-bold px-1.5 py-0.5 rounded"
                           style={{ background: color + "20", color }}>{i + 1}</span>
-                        <p className="text-[11px] font-semibold leading-tight line-clamp-2" style={{ color: "var(--color-text)" }}>{s.title}</p>
+                        <p className="text-[13px] font-semibold leading-tight line-clamp-2" style={{ color: "var(--color-text)" }}>{s.title}</p>
                       </div>
                       <div className="space-y-0.5">
                         {s.points.slice(0, 3).map((p, pi) => (
-                          <p key={pi} className="text-[10px] text-muted leading-tight">• {p}</p>
+                          <p key={pi} className="text-[12px] text-muted leading-tight">• {p}</p>
                         ))}
                         {s.points.length > 3 && (
-                          <p className="text-[10px] text-muted opacity-60">+{s.points.length - 3} more</p>
+                          <p className="text-[12px] text-muted opacity-60">+{s.points.length - 3} more</p>
                         )}
                       </div>
                     </div>
@@ -854,12 +854,12 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
                 )}
                 {slides.length > 0 && (
                   <div className="mb-4">
-                    <p className="text-[10px] text-muted uppercase tracking-wider mb-2">{T("vid.slide_outline")}</p>
+                    <p className="text-[12px] text-muted uppercase tracking-wider mb-2">{T("vid.slide_outline")}</p>
                     <div className="bg-bg-card border border-border rounded-xl px-4 py-3 max-h-44 overflow-y-auto">
                       {slides.map((s, i) => (
                         <div key={i} className="mb-2 last:mb-0">
                           <p className="text-xs font-semibold" style={{ color: "var(--color-text)" }}>{i + 1}. {s.title}</p>
-                          <p className="text-[10px] text-muted mt-0.5 ml-3 leading-relaxed">
+                          <p className="text-[12px] text-muted mt-0.5 ml-3 leading-relaxed">
                             {s.points.join(" · ")}
                           </p>
                         </div>
@@ -883,12 +883,12 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
                 {currentFolder?.label ?? T("vid.all")}
               </h2>
               {!loadingVideos && (
-                <span className="text-[11px] text-muted">
+                <span className="text-[13px] text-muted">
                   {folderVideos.length} video{folderVideos.length !== 1 ? "s" : ""}
                 </span>
               )}
               {currentFolder?.key === "__external__" && (
-                <span className="ml-auto text-[10px] text-muted italic">{T("vid.external_sub")}</span>
+                <span className="ml-auto text-[12px] text-muted italic">{T("vid.external_sub")}</span>
               )}
             </div>
 

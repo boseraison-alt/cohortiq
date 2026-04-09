@@ -198,7 +198,7 @@ export default function OnlineChat({ currentUserId, color }: Props) {
                 >
                   ‹ Back
                 </button>
-                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0"
                   style={{ background: color + "30", color }}>
                   {initials(chatUser)}
                 </div>
@@ -231,7 +231,7 @@ export default function OnlineChat({ currentUserId, color }: Props) {
               {/* Messages */}
               <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2" style={{ minHeight: 200, background: "var(--color-bg)" }}>
                 {messages.length === 0 && (
-                  <p className="text-[11px] text-muted text-center py-6">
+                  <p className="text-[13px] text-muted text-center py-6">
                     Start a conversation with {displayName(chatUser)}
                   </p>
                 )}
@@ -249,7 +249,7 @@ export default function OnlineChat({ currentUserId, color }: Props) {
                         }}
                       >
                         <p>{m.content}</p>
-                        <p className="mt-0.5 text-[9px] opacity-60 text-right">{formatTime(m.createdAt)}</p>
+                        <p className="mt-0.5 text-[13px] opacity-60 text-right">{formatTime(m.createdAt)}</p>
                       </div>
                     </div>
                   );
@@ -283,7 +283,7 @@ export default function OnlineChat({ currentUserId, color }: Props) {
             /* Online users list */
             <div className="flex-1 overflow-y-auto py-1" style={{ background: "var(--color-bg-card)" }}>
               {onlineUsers.length === 0 ? (
-                <p className="text-[11px] text-muted text-center py-8 px-4 leading-relaxed">
+                <p className="text-[13px] text-muted text-center py-8 px-4 leading-relaxed">
                   No other users are online right now.
                   <br />They&apos;ll appear here when they log in.
                 </p>
@@ -296,7 +296,7 @@ export default function OnlineChat({ currentUserId, color }: Props) {
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
                     <div className="relative shrink-0">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold"
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold"
                         style={{ background: color + "25", color }}>
                         {initials(u)}
                       </div>
@@ -305,10 +305,10 @@ export default function OnlineChat({ currentUserId, color }: Props) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold truncate" style={{ color: "var(--color-text)" }}>{displayName(u)}</p>
-                      <p className="text-[10px] text-muted">Online now</p>
+                      <p className="text-[12px] text-muted">Online now</p>
                     </div>
                     {unread[u.id] > 0 && (
-                      <span className="text-[9px] font-bold rounded-full w-5 h-5 flex items-center justify-center shrink-0"
+                      <span className="text-[13px] font-bold rounded-full w-5 h-5 flex items-center justify-center shrink-0"
                         style={{ background: color, color: "#fff" }}>
                         {unread[u.id]}
                       </span>
@@ -336,7 +336,7 @@ export default function OnlineChat({ currentUserId, color }: Props) {
         <span className="relative flex items-center">
           <span className="text-sm">👥</span>
           {!open && totalUnread > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center"
+            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[13px] font-bold flex items-center justify-center"
               style={{ background: "#EF5350", color: "#fff" }}>
               {totalUnread > 9 ? "9+" : totalUnread}
             </span>
