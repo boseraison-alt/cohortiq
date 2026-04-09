@@ -84,7 +84,7 @@ export default function Sidebar({
       <div className="dash-sidebar-section">
         <button
           className="dash-nav-item"
-          style={activeTab === "customize" ? { background: accentBg, color: accentText, fontWeight: 500 } : { color: "var(--color-muted)", fontSize: "0.78rem" }}
+          style={activeTab === "customize" ? { background: accentBg, color: accentText, fontWeight: 500 } : undefined}
           onClick={() => onTabChange?.("customize")}
         >
           <span className="dash-nav-icon">⚙️</span>
@@ -142,10 +142,9 @@ export default function Sidebar({
             <button
               key={`${item.type}-${item.id}`}
               className="dash-nav-item"
-              style={{ fontSize: "0.76rem", color: "var(--color-muted)" }}
               onClick={() => handleHistoryClick(item)}
             >
-              <span className="dash-nav-icon" style={{ fontSize: "0.7rem" }}>
+              <span className="dash-nav-icon">
                 {item.type === "chat" ? "↩" : "🎙"}
               </span>
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
