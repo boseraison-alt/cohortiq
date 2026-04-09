@@ -6,9 +6,8 @@ import { prisma } from "@/lib/db";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { getUploadDir, getUploadUrl } from "@/lib/uploads";
-import OpenAI from "openai";
-
-function getOpenAI() {
+async function getOpenAI() {
+  const { default: OpenAI } = await import("openai");
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });
 }
 
@@ -75,7 +74,8 @@ export async function POST(req: NextRequest) {
         const globalIdx = i + batchIdx;
         try {
           const voice = style === "lecture" ? "onyx" : (VOICES[seg.host] || "nova");
-          const response = await getOpenAI().audio.speech.create({
+          const openai = await getOpenAI();
+          const response = await openai.audio.speech.create({
             model: "tts-1",
             voice,
             input: seg.text,
