@@ -8,7 +8,9 @@ import path from "path";
 import { getUploadDir, getUploadUrl } from "@/lib/uploads";
 import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+function getOpenAI() {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });
+}
 
 // Voice assignments
 const VOICES: Record<string, "onyx" | "nova"> = {
@@ -73,7 +75,7 @@ export async function POST(req: NextRequest) {
         const globalIdx = i + batchIdx;
         try {
           const voice = style === "lecture" ? "onyx" : (VOICES[seg.host] || "nova");
-          const response = await openai.audio.speech.create({
+          const response = await getOpenAI().audio.speech.create({
             model: "tts-1",
             voice,
             input: seg.text,
