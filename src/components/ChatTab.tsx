@@ -311,7 +311,7 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
                   x
                 </button>
               </div>
-              <p className="text-[12px] text-muted mt-1">
+              <p className="text-xs mt-1" style={{ color: "var(--color-muted-light)" }}>
                 {s.messageCount} msgs · {new Date(s.date).toLocaleDateString()}
               </p>
             </div>
@@ -327,16 +327,17 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
         {/* Messages */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4">
           {!messages.length && (
-            <div className="text-center text-muted py-14">
+            <div className="text-center py-14">
               <div className="text-3xl mb-3">💬</div>
-              <p className="font-serif text-lg text-muted-light">{T("chat.empty_title", { name })}</p>
-              <p className="text-xs mt-2 max-w-md mx-auto leading-relaxed">{T("chat.empty_desc")}</p>
+              <p className="font-serif text-xl font-semibold" style={{ color: "var(--color-text)" }}>{T("chat.empty_title", { name })}</p>
+              <p className="text-sm mt-2 max-w-md mx-auto leading-relaxed" style={{ color: "var(--color-muted-light)" }}>{T("chat.empty_desc")}</p>
               <div className="mt-4 flex gap-2 justify-center flex-wrap">
                 {[T("chat.starter_1"), T("chat.starter_2"), T("chat.starter_3")].map((s) => (
                   <button
                     key={s}
                     onClick={() => setInput(s)}
-                    className="bg-bg-card border border-border rounded-lg px-3 py-2 text-xs text-muted-light hover:bg-bg-raised transition-all"
+                    className="bg-bg-card border border-border-light rounded-lg px-3 py-2 text-sm font-medium hover:bg-bg-raised transition-all"
+                    style={{ color: "var(--color-text)" }}
                   >
                     {s}
                   </button>
