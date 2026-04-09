@@ -349,11 +349,11 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
             return (
               <div key={i} className={`flex flex-col mb-3 ${m.role === "user" ? "items-end" : "items-start"}`}>
                 <div
-                  className="max-w-[80%] px-4 py-3 rounded-xl text-sm leading-relaxed whitespace-pre-wrap"
+                  className="max-w-[80%] px-4 py-3 rounded-xl text-base leading-relaxed whitespace-pre-wrap"
                   style={{
                     background: m.role === "user" ? color + "20" : "var(--color-bg-card)",
                     border: `1px solid ${m.role === "user" ? color + "40" : "var(--color-border)"}`,
-                    color: m.role === "user" ? "var(--color-text)" : "var(--color-muted-light)",
+                    color: "var(--color-text)",
                   }}
                 >
                   {m.content}
@@ -399,7 +399,7 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
                     <button
                       onClick={() => handleDepthChoice("comprehensive", m.pendingQuery!)}
                       disabled={busy}
-                      className="text-left px-4 py-3 rounded-xl text-xs border transition-all hover:opacity-90"
+                      className="text-left px-4 py-3 rounded-xl text-sm border transition-all hover:opacity-90"
                       style={{ background: color + "10", borderColor: color + "40", color }}
                     >
                       <span className="font-semibold">📖 Comprehensive</span>
@@ -408,8 +408,8 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
                     <button
                       onClick={() => handleDepthChoice("summary", m.pendingQuery!)}
                       disabled={busy}
-                      className="text-left px-4 py-3 rounded-xl text-xs border transition-all hover:opacity-90"
-                      style={{ background: "var(--color-bg)", borderColor: "var(--color-border)", color: "var(--color-muted-light)" }}
+                      className="text-left px-4 py-3 rounded-xl text-sm border transition-all hover:opacity-90"
+                      style={{ background: "var(--color-bg)", borderColor: "var(--color-border)", color: "var(--color-text)" }}
                     >
                       <span className="font-semibold">📝 Brief Summary</span>
                       <span className="block mt-0.5 opacity-70">Key takeaways, essential formulas, under 200 words</span>
@@ -419,14 +419,14 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
 
                 {isLastAssistant && m.followUps && m.followUps.length > 0 && (
                   <div className="mt-2 max-w-[80%]">
-                    <p className="text-[12px] text-muted uppercase tracking-wider mb-1.5">{T("chat.where_next")}</p>
+                    <p className="text-xs text-muted-light font-semibold uppercase tracking-wider mb-1.5">{T("chat.where_next")}</p>
                     <div className="flex flex-col gap-1.5">
                       {m.followUps.map((q, qi) => (
                         <button
                           key={qi}
                           onClick={() => sendFollowUp(q)}
                           disabled={busy}
-                          className="text-left px-3 py-2 rounded-lg text-xs border transition-all hover:opacity-90"
+                          className="text-left px-3 py-2 rounded-lg text-sm border transition-all hover:opacity-90"
                           style={{ background: color + "10", borderColor: color + "30", color }}
                         >
                           {q}
@@ -513,7 +513,7 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send()}
             disabled={busy}
             placeholder={voiceListening ? "Listening…" : devilsAdvocate ? "State your position — I'll push back…" : T("chat.placeholder")}
-            className="flex-1 bg-bg-card border border-border-light rounded-xl px-4 py-3 text-sm outline-none focus:border-[#555B66] transition-all"
+            className="flex-1 bg-bg-card border border-border-light rounded-xl px-4 py-3 text-base outline-none focus:border-[#555B66] transition-all"
             style={{ color: voiceListening ? "var(--color-muted)" : "var(--color-text)" }}
           />
           {voiceSupported && (
@@ -535,7 +535,7 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
           <button
             onClick={send}
             disabled={busy || (!input.trim() && !pendingImage)}
-            className="rounded-xl px-5 py-3 text-sm font-semibold text-bg transition-all"
+            className="rounded-xl px-5 py-3 text-base font-semibold text-bg transition-all"
             style={{ background: (input.trim() || pendingImage) && !busy ? color : "var(--color-border-light)" }}
           >
             {T("chat.send")}
