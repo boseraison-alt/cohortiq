@@ -18,6 +18,8 @@ interface Message {
   content: string;
   followUps?: string[];
   isPhotoResponse?: boolean;
+  depthChoice?: boolean; // true = show comprehensive/brief buttons
+  pendingQuery?: string; // the original question waiting for depth choice
 }
 
 interface Session {
@@ -43,7 +45,6 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
   const { listening: voiceListening, supported: voiceSupported, toggle: toggleVoice, interimTranscript } =
     useVoiceInput({ onTranscript: (t) => setInput((prev) => prev ? prev + " " + t : t) });
   const [devilsAdvocate, setDevilsAdvocate] = useState(false);
-  const [answerMode, setAnswerMode] = useState<"auto" | "comprehensive" | "summary">("auto");
   const [pendingImage, setPendingImage] = useState<PendingImage | null>(null);
   const [imageSubmitState, setImageSubmitState] = useState<"idle" | "submitted" | "error">("idle");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -126,23 +127,25 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
     reader.readAsDataURL(file);
   };
 
-  const send = async () => {
-    if ((!input.trim() && !pendingImage) || busy) return;
-    const q = input.trim();
-    const imgToSend = pendingImage;
+  // Detect broad questions that should offer depth choice
+  const isBroad = (q: string) => {
+    const l = q.toLowerCase().trim();
+    return /^(explain|summarize|overview|recap|review|teach|walk.?through|tell me about|what is|describe)\s/i.test(l)
+      && (/\b(chapter|topic|section|module|unit|all|everything|whole|entire|full)\b/i.test(l) || l.split(/\s+/).length <= 6);
+  };
 
-    setMessages((p) => [...p, { role: "user", content: q || "[Photo attached]" }]);
-    setInput("");
-    setPendingImage(null);
+  const sendWithMode = async (q: string, mode: "auto" | "comprehensive" | "summary", imgToSend?: PendingImage | null) => {
     setBusy(true);
     setImageSubmitState("idle");
+    // Remove depth choice message if present
+    setMessages((p) => p.filter((m) => !m.depthChoice));
 
     const body: Record<string, any> = {
       courseId,
       sessionId: activeSessionId,
       message: q,
       devilsAdvocate,
-      answerMode,
+      answerMode: mode,
     };
     if (imgToSend) {
       body.imageBase64 = imgToSend.base64;
@@ -183,6 +186,37 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
     setBusy(false);
   };
 
+  const send = async () => {
+    if ((!input.trim() && !pendingImage) || busy) return;
+    const q = input.trim();
+    const imgToSend = pendingImage;
+
+    setMessages((p) => [...p, { role: "user", content: q || "[Photo attached]" }]);
+    setInput("");
+    setPendingImage(null);
+
+    // If broad question, ask user for depth preference
+    if (q && isBroad(q) && !imgToSend) {
+      setMessages((p) => [
+        ...p,
+        {
+          role: "assistant",
+          content: "I can give you a comprehensive answer covering every learning objective, formula, and example — or a brief summary with key takeaways. Which would you prefer?",
+          depthChoice: true,
+          pendingQuery: q,
+        },
+      ]);
+      return;
+    }
+
+    // Not broad — send with auto mode
+    await sendWithMode(q, "auto", imgToSend);
+  };
+
+  const handleDepthChoice = (mode: "comprehensive" | "summary", query: string) => {
+    sendWithMode(query, mode);
+  };
+
   const sendFollowUp = (q: string) => {
     setInput(q);
     setTimeout(() => {
@@ -192,7 +226,7 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
       fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId, sessionId: activeSessionId, message: q, devilsAdvocate, answerMode }),
+        body: JSON.stringify({ courseId, sessionId: activeSessionId, message: q, devilsAdvocate, answerMode: "auto" }),
       })
         .then((r) => r.json())
         .then((data) => {
@@ -359,6 +393,30 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
                   </div>
                 )}
 
+                {/* Depth choice buttons */}
+                {m.depthChoice && m.pendingQuery && (
+                  <div className="mt-3 flex flex-col gap-2 max-w-[80%]">
+                    <button
+                      onClick={() => handleDepthChoice("comprehensive", m.pendingQuery!)}
+                      disabled={busy}
+                      className="text-left px-4 py-3 rounded-xl text-xs border transition-all hover:opacity-90"
+                      style={{ background: color + "10", borderColor: color + "40", color }}
+                    >
+                      <span className="font-semibold">📖 Comprehensive</span>
+                      <span className="block mt-0.5 opacity-70">Every learning objective, all formulas, comparison tables, examples, glossary</span>
+                    </button>
+                    <button
+                      onClick={() => handleDepthChoice("summary", m.pendingQuery!)}
+                      disabled={busy}
+                      className="text-left px-4 py-3 rounded-xl text-xs border transition-all hover:opacity-90"
+                      style={{ background: "var(--color-bg)", borderColor: "var(--color-border)", color: "var(--color-muted-light)" }}
+                    >
+                      <span className="font-semibold">📝 Brief Summary</span>
+                      <span className="block mt-0.5 opacity-70">Key takeaways, essential formulas, under 200 words</span>
+                    </button>
+                  </div>
+                )}
+
                 {isLastAssistant && m.followUps && m.followUps.length > 0 && (
                   <div className="mt-2 max-w-[80%]">
                     <p className="text-[10px] text-muted uppercase tracking-wider mb-1.5">{T("chat.where_next")}</p>
@@ -432,30 +490,6 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
           >
             📷
           </button>
-
-          {/* Answer mode toggle */}
-          <div className="shrink-0 flex items-center h-9 rounded-xl border overflow-hidden" style={{ borderColor: "var(--color-border-light)" }}>
-            {([
-              { key: "auto", label: "Auto", icon: "⚡" },
-              { key: "comprehensive", label: "Full", icon: "📖" },
-              { key: "summary", label: "Brief", icon: "📝" },
-            ] as const).map((m) => (
-              <button key={m.key}
-                onClick={() => setAnswerMode(m.key)}
-                disabled={busy}
-                title={m.key === "auto" ? "Auto — AI decides depth" : m.key === "comprehensive" ? "Comprehensive — cover every learning objective, formula, and example" : "Summary — concise key takeaways only"}
-                className="flex items-center gap-1 px-2 h-full text-[10px] font-semibold transition-all"
-                style={{
-                  background: answerMode === m.key ? color + "20" : "transparent",
-                  color: answerMode === m.key ? color : "var(--color-muted)",
-                  borderRight: m.key !== "summary" ? "1px solid var(--color-border-light)" : "none",
-                }}
-              >
-                <span>{m.icon}</span>
-                <span className="hidden sm:inline">{m.label}</span>
-              </button>
-            ))}
-          </div>
 
           {/* Devil's Advocate toggle */}
           <button
