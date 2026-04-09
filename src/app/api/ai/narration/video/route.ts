@@ -4,6 +4,11 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { logUsage } from "@/lib/usage";
 import { generateSpeech, splitIntoChunks } from "@/lib/tts";
+import { buildSlideSvg, renderSlideToPng } from "@/lib/slides";
+import { compositeVideo } from "@/lib/ffmpeg";
+import { getUploadDir, getUploadUrl } from "@/lib/uploads";
+import { mkdir } from "fs/promises";
+import path from "path";
 
 import type { SlideData } from "@/lib/slides";
 
@@ -23,42 +28,68 @@ export async function POST(req: NextRequest) {
     }
 
     const totalSlides = slides.length;
+    const slideMedia: { png: Buffer; mp3: Buffer }[] = [];
 
-    // Generate TTS audio for each slide narration
-    const enrichedSlides: any[] = [];
-    let totalChars = 0;
-
+    // Process each slide: render image + generate audio
     for (let i = 0; i < totalSlides; i++) {
       const slide = slides[i] as SlideData;
-      totalChars += slide.narration.length;
 
-      // Estimate duration from narration length (~150 words/min, ~5 chars/word)
-      const estimatedDuration = Math.max(5, Math.round((slide.narration.length / 5 / 150) * 60));
+      // Render slide SVG → PNG
+      const svg = buildSlideSvg(slide, i, totalSlides, accentColor, courseName);
+      const png = await renderSlideToPng(svg);
 
-      enrichedSlides.push({
-        title: slide.title,
-        points: slide.points,
-        narration: slide.narration,
-        icon: slide.icon,
-        formulas: slide.formulas,
-        duration: estimatedDuration,
-      });
+      // Generate TTS audio for narration
+      const narrationChunks = splitIntoChunks(slide.narration, 4000);
+      const audioBuffers: Buffer[] = [];
+      for (const chunk of narrationChunks) {
+        const buf = await generateSpeech(chunk, "onyx");
+        audioBuffers.push(buf);
+      }
+      const mp3 = Buffer.concat(audioBuffers);
+
+      slideMedia.push({ png, mp3 });
     }
 
-    // Save as Video record — slide presentation view (no MP4 needed)
+    // Composite all slides into a single MP4 video
+    const uploadDir = getUploadDir("videos");
+    await mkdir(uploadDir, { recursive: true });
+
+    const safeTopic = (topic || "presentation")
+      .replace(/[^a-zA-Z0-9 _-]/g, "")
+      .replace(/\s+/g, "_")
+      .slice(0, 40);
+    const fileName = `presentation_${safeTopic}_${Date.now()}.mp4`;
+    const outputPath = path.join(uploadDir, fileName);
+
+    const { fileSize, slideDurations } = await compositeVideo(slideMedia, outputPath);
+
+    // Enrich slides with per-slide audio durations for annotation timeline
+    const enrichedSlides = slides.map((s: SlideData, i: number) => ({
+      title: s.title,
+      points: s.points,
+      narration: s.narration,
+      icon: s.icon,
+      formulas: s.formulas,
+      duration: slideDurations[i] ?? 30,
+    }));
+
+    // Save as Video record
     const video = await prisma.video.create({
       data: {
         courseId,
         title: topic || "Study Material",
         description: `AI-generated ${totalSlides}-slide presentation (${duration} min)`,
-        url: "slides-only",
+        url: getUploadUrl("videos", fileName),
         sourceType: "presentation",
+        fileName,
+        fileSize,
         lang,
         slidesData: JSON.stringify(enrichedSlides),
       },
     });
 
     // Log TTS usage
+    const totalChars = slides.reduce((s: number, sl: SlideData) => s + sl.narration.length, 0);
     await logUsage({
       userId: (session.user as any).id,
       courseId,
@@ -66,7 +97,7 @@ export async function POST(req: NextRequest) {
       ttsChars: totalChars,
     });
 
-    return NextResponse.json({ video });
+    return NextResponse.json({ video, videoUrl: getUploadUrl("videos", fileName) });
   } catch (e: any) {
     console.error("[narration/video]", e.message);
     return NextResponse.json({ error: e.message || "Video generation failed" }, { status: 500 });
