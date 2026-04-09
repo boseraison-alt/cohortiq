@@ -1,5 +1,3 @@
-import sharp from "sharp";
-
 export interface SlideData {
   title: string;
   points: string[];
@@ -160,10 +158,21 @@ export function buildSlideSvg(
   </svg>`;
 }
 
-// Render SVG string to PNG buffer using Sharp
+// Render SVG string to PNG buffer using resvg-js (handles fonts reliably on Linux)
 export async function renderSlideToPng(svgString: string): Promise<Buffer> {
-  return sharp(Buffer.from(svgString))
-    .resize(W, H)
-    .png({ quality: 90 })
-    .toBuffer();
+  const { Resvg } = await import("@resvg/resvg-js");
+  const resvg = new Resvg(svgString, {
+    fitTo: { mode: "width" as const, value: W },
+    font: {
+      loadSystemFonts: true,
+      // Explicitly scan apt-installed font dirs on Railway (Linux)
+      fontDirs: ["/usr/share/fonts", "/usr/local/share/fonts"],
+      defaultFontFamily: "DejaVu Sans",
+      sansSerifFamily: "DejaVu Sans",
+      serifFamily: "DejaVu Serif",
+      monospaceFamily: "DejaVu Sans Mono",
+    },
+  });
+  const pngData = resvg.render();
+  return Buffer.from(pngData.asPng());
 }

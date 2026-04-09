@@ -7,7 +7,7 @@ const nextConfig = {
     ],
   },
   experimental: {
-    serverComponentsExternalPackages: ["@prisma/client", "sharp", "ffmpeg-static"],
+    serverComponentsExternalPackages: ["@prisma/client", "sharp", "ffmpeg-static", "@resvg/resvg-js"],
   },
 };
 
