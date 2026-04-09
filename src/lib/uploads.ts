@@ -12,12 +12,10 @@ export function getUploadDir(subfolder: "videos" | "podcasts"): string {
 
 /**
  * Get the URL path to serve an uploaded file.
- * - If UPLOADS_DIR is set, serve via /api/uploads/ route.
- * - Otherwise serve directly from /uploads/ (Next.js public dir).
+ * Always routes through /api/uploads/ so we control serving
+ * (supports HTTP Range requests for video/audio streaming, and
+ * works whether files are in public/ or a Railway Volume).
  */
 export function getUploadUrl(subfolder: "videos" | "podcasts", fileName: string): string {
-  if (process.env.UPLOADS_DIR) {
-    return `/api/uploads/${subfolder}/${fileName}`;
-  }
-  return `/uploads/${subfolder}/${fileName}`;
+  return `/api/uploads/${subfolder}/${fileName}`;
 }

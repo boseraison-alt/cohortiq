@@ -58,7 +58,7 @@ function getVideoType(url: string, sourceType: string) {
   if (sourceType === "tutorial") return "tutorial";
   if (sourceType === "presentation") return "presentation";
   if (sourceType === "narration") return "narration";
-  if (url.startsWith("/uploads/")) return "file";
+  if (url.startsWith("/uploads/") || url.startsWith("/api/uploads/")) return "file";
   return "external";
 }
 
