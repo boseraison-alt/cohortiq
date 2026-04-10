@@ -226,7 +226,7 @@ function VideoCard({
             className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-[9px] transition-all hover:bg-red-500 hover:text-white z-10 opacity-0 group-hover:opacity-40 hover:!opacity-100"
             style={{ background: "rgba(0,0,0,0.25)", color: "rgba(255,255,255,0.7)" }}
           >
-            ✕
+            🗑
           </button>
         )}
       </div>
