@@ -29,7 +29,6 @@ const STUDY_MODES = [
   { key: "chat",     icon: "💬", label: "Chat Tutor" },
   { key: "podcast",  icon: "🎧", label: "Podcast" },
   { key: "videos",   icon: "🎬", label: "Videos" },
-  { key: "map",      icon: "🗺", label: "Mind Map" },
   { key: "brain",    icon: "🧠", label: "Brain Search" },
 ];
 
