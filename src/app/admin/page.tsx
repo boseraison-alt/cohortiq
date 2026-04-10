@@ -24,7 +24,7 @@ const A = {
 };
 
 type Panel = "overview" | "members" | "features" | "engagement"
-  | "invites" | "credits" | "courses" | "materials" | "upload" | "approvals" | "feedback";
+  | "invites" | "credits" | "courses" | "materials" | "upload" | "approvals" | "feedback" | "videos";
 
 /* ═══════════════════════════════════════════════════════════════
    MAIN PAGE
@@ -66,6 +66,7 @@ export default function AdminPage() {
         { key: "credits", label: "Credits", icon: "credit-card" },
         { key: "courses", label: "Courses", icon: "book" },
         { key: "upload", label: "Upload Content", icon: "upload" },
+        { key: "videos", label: "Videos", icon: "video" },
         { key: "approvals", label: "Approvals", icon: "check-square" },
         { key: "feedback", label: "Feedback", icon: "star" },
       ],
@@ -133,6 +134,7 @@ export default function AdminPage() {
           {panel === "credits" && <MgmtWrap title="Credits & Passwords" sub="Manage user credits and password resets"><CreditsPanel /></MgmtWrap>}
           {panel === "courses" && <MgmtWrap title="Courses" sub="Create and manage courses"><CoursesPanel /></MgmtWrap>}
           {panel === "upload" && <MgmtWrap title="Upload Content" sub="Upload materials and videos"><ContentUpload /></MgmtWrap>}
+          {panel === "videos" && <MgmtWrap title="Videos" sub="Browse and delete course videos"><VideoManagement /></MgmtWrap>}
           {panel === "approvals" && <MgmtWrap title="Approvals" sub="Review and approve submitted materials"><MaterialApproval /></MgmtWrap>}
           {panel === "feedback" && <MgmtWrap title="Feedback" sub="View content ratings and feedback"><FeedbackPanel /></MgmtWrap>}
         </div>
@@ -155,6 +157,7 @@ function NavIcon({ name, active }: { name: string; active: boolean }) {
     "credit-card": <svg style={s} viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>,
     book: <svg style={s} viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 004 17V4h16v13H6.5"/></svg>,
     upload: <svg style={s} viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>,
+    video: <svg style={s} viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>,
     "check-square": <svg style={s} viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>,
     star: <svg style={s} viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
   };
@@ -841,6 +844,144 @@ function CoursesPanel() {
           </div>
         </Card>
       ))}
+    </div>
+  );
+}
+
+// ── Content Upload ──
+// ── Video Management ──
+function VideoManagement() {
+  const [courses, setCourses] = useState<any[]>([]);
+  const [courseId, setCourseId] = useState("");
+  const [videos, setVideos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/courses").then((r) => r.json()).then((data) => {
+      setCourses(data);
+      if (data.length) setCourseId(data[0].id);
+    }).catch(() => {});
+  }, []);
+
+  const loadVideos = (cid: string) => {
+    if (!cid) return;
+    setLoading(true);
+    fetch(`/api/admin/courses/${cid}/videos`)
+      .then((r) => r.json())
+      .then((data) => setVideos(Array.isArray(data) ? data : []))
+      .catch(() => setVideos([]))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { loadVideos(courseId); }, [courseId]);
+
+  const deleteVideo = async (videoId: string, title: string) => {
+    if (!confirm(`Delete "${title}"?\n\nThis removes the video and its file permanently.`)) return;
+    setDeleting(videoId);
+    try {
+      const res = await fetch(`/api/admin/courses/${courseId}/videos/${videoId}`, { method: "DELETE" });
+      if (res.ok) {
+        setVideos((v) => v.filter((x) => x.id !== videoId));
+      } else {
+        const d = await res.json();
+        alert("Delete failed: " + (d.error || "Unknown error"));
+      }
+    } catch (e: any) {
+      alert("Delete failed: " + e.message);
+    }
+    setDeleting(null);
+  };
+
+  const formatBytes = (n: number) => n < 1024 * 1024 ? `${(n / 1024).toFixed(1)} KB` : `${(n / (1024 * 1024)).toFixed(1)} MB`;
+
+  const typeLabel: Record<string, string> = {
+    url: "External", file: "Upload", presentation: "AI Slides", narration: "AI Narration", tutorial: "Tutorial",
+  };
+  const typeBg: Record<string, string> = {
+    url: A.subtle, file: A.blueBg, presentation: A.purpleBg, narration: A.purpleBg, tutorial: A.greenBg,
+  };
+  const typeColor: Record<string, string> = {
+    url: A.muted, file: A.blue, presentation: A.purple, narration: A.purple, tutorial: A.green,
+  };
+
+  return (
+    <div>
+      {/* Course picker */}
+      <Card style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <label style={{ fontSize: ".78rem", color: A.muted, fontFamily: A.mono, whiteSpace: "nowrap" }}>COURSE</label>
+          <select
+            value={courseId}
+            onChange={(e) => setCourseId(e.target.value)}
+            style={{ flex: 1, minWidth: 200, border: `1px solid ${A.borderMd}`, borderRadius: 8, padding: "8px 12px", fontSize: ".82rem", fontFamily: A.sans, outline: "none", background: A.bg }}
+          >
+            {courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <span style={{ fontSize: ".74rem", color: A.muted, fontFamily: A.mono, whiteSpace: "nowrap" }}>
+            {loading ? "Loading…" : `${videos.length} video${videos.length !== 1 ? "s" : ""}`}
+          </span>
+        </div>
+      </Card>
+
+      {/* Video list */}
+      {loading ? (
+        <p style={{ textAlign: "center", color: A.muted, padding: "40px 0" }}>Loading videos…</p>
+      ) : !videos.length ? (
+        <div style={{ textAlign: "center", padding: "48px 0" }}>
+          <p style={{ fontSize: "2rem", marginBottom: 8 }}>🎬</p>
+          <p style={{ color: A.muted, fontSize: ".86rem" }}>No videos for this course.</p>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {videos.map((v) => (
+            <Card key={v.id} style={{ padding: "14px 16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                {/* Type badge */}
+                <span style={{
+                  fontSize: ".62rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px",
+                  padding: "3px 8px", borderRadius: 50, whiteSpace: "nowrap", flexShrink: 0,
+                  background: typeBg[v.sourceType] || A.subtle,
+                  color: typeColor[v.sourceType] || A.muted,
+                }}>
+                  {typeLabel[v.sourceType] || v.sourceType}
+                </span>
+
+                {/* Title + meta */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: ".86rem", fontWeight: 600, color: A.ink, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {v.title.replace(/^(Presentation|Narration): ?/, "")}
+                  </p>
+                  <p style={{ fontSize: ".72rem", color: A.muted, fontFamily: A.mono }}>
+                    {new Date(v.createdAt).toLocaleDateString()}
+                    {v.fileSize ? ` · ${formatBytes(v.fileSize)}` : ""}
+                    {v.lang && v.lang !== "en" ? ` · ${v.lang.toUpperCase()}` : ""}
+                    {v.url?.startsWith("http") ? (
+                      <> · <a href={v.url} target="_blank" rel="noopener noreferrer" style={{ color: A.blue }}>external link</a></>
+                    ) : null}
+                  </p>
+                </div>
+
+                {/* Delete button */}
+                <button
+                  onClick={() => deleteVideo(v.id, v.title)}
+                  disabled={deleting === v.id}
+                  style={{
+                    flexShrink: 0, padding: "6px 14px", borderRadius: 8,
+                    border: `1px solid ${A.red}30`, background: deleting === v.id ? A.redBg : "transparent",
+                    color: A.red, fontSize: ".76rem", fontWeight: 600, cursor: deleting === v.id ? "wait" : "pointer",
+                    fontFamily: A.sans, transition: "all .15s",
+                  }}
+                  onMouseEnter={(e) => { if (deleting !== v.id) e.currentTarget.style.background = A.redBg; }}
+                  onMouseLeave={(e) => { if (deleting !== v.id) e.currentTarget.style.background = "transparent"; }}
+                >
+                  {deleting === v.id ? "Deleting…" : "🗑 Delete"}
+                </button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

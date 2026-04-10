@@ -151,9 +151,9 @@ function buildFolders(videos: Video[], lang: Lang = "en"): Folder[] {
 // ── VideoCard ────────────────────────────────────────────────────────────────
 
 function VideoCard({
-  video, color, isActive, onClick, lang = "en", courseId,
+  video, color, isActive, onClick, lang = "en", courseId, onDelete,
 }: {
-  video: Video; color: string; isActive: boolean; onClick: () => void; lang?: Lang; courseId: string;
+  video: Video; color: string; isActive: boolean; onClick: () => void; lang?: Lang; courseId: string; onDelete?: () => void;
 }) {
   const type = getVideoType(video.url, video.sourceType);
   const ytThumb = getYtThumb(video.url);
@@ -174,9 +174,12 @@ function VideoCard({
   };
 
   return (
-    <button
+    <div
       onClick={onClick}
-      className="text-left rounded-xl overflow-hidden border transition-all hover:scale-[1.01] hover:shadow-lg w-full"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === "Enter" && onClick()}
+      className="group text-left rounded-xl overflow-hidden border transition-all hover:scale-[1.01] hover:shadow-lg w-full cursor-pointer"
       style={{
         borderColor: isActive ? color : "var(--color-border)",
         background: isActive ? color + "10" : "var(--color-bg-card)",
@@ -214,6 +217,18 @@ function VideoCard({
             {LANG_FOLDERS[video.lang].flag}
           </span>
         )}
+
+        {/* Delete button — top-right overlay, only for non-external videos */}
+        {onDelete && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            title="Delete video"
+            className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg transition-all hover:scale-110 z-10"
+            style={{ background: "#ef5350" }}
+          >
+            🗑
+          </button>
+        )}
       </div>
       <div className="px-3 py-2.5">
         <p className="text-xs font-semibold leading-tight line-clamp-2 mb-1" style={{ color: "var(--color-text)" }}>
@@ -238,7 +253,7 @@ function VideoCard({
           />
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -599,6 +614,18 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
     setStatusMsg(""); setErrorMsg(""); setProgress(0); setElapsed(0);
   };
 
+  const deleteVideo = async (videoId: string) => {
+    if (!confirm("Delete this video? This cannot be undone.")) return;
+    await fetch(`/api/courses/${courseId}/videos`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ videoId }),
+    });
+    if (activeVideo?.id === videoId) setActiveVideo(null);
+    if (genVideo?.id === videoId) resetGen();
+    loadVideos();
+  };
+
   const generate = async () => {
     if (!topic.trim()) return;
     abortRef.current = new AbortController();
@@ -929,6 +956,7 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
                     onClick={() => setActiveVideo(activeVideo?.id === v.id ? null : v)}
                     lang={lang}
                     courseId={courseId}
+                    onDelete={!isExternal(v) ? () => deleteVideo(v.id) : undefined}
                   />
                 ))}
               </div>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile, mkdir, unlink } from "fs/promises";
 import { getUploadDir, getUploadUrl } from "@/lib/uploads";
 import path from "path";
 
@@ -86,6 +86,25 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   const { videoId } = await req.json();
   if (!videoId) return NextResponse.json({ error: "videoId required" }, { status: 400 });
 
-  await prisma.video.delete({ where: { id: videoId, courseId: params.id } });
+  // Fetch the record first so we can clean up the file
+  const video = await prisma.video.findFirst({
+    where: { id: videoId, courseId: params.id },
+  });
+  if (!video) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Delete the physical file if it's a locally-stored upload
+  if (video.url && video.url !== "slides-only" && !video.url.startsWith("http")) {
+    try {
+      const match = video.url.match(/\/(videos|podcasts)\/([^/]+)$/);
+      if (match) {
+        const filePath = path.join(getUploadDir(match[1] as "videos" | "podcasts"), match[2]);
+        await unlink(filePath);
+      }
+    } catch {
+      // File may already be gone — ignore
+    }
+  }
+
+  await prisma.video.delete({ where: { id: videoId } });
   return NextResponse.json({ success: true });
 }

@@ -276,6 +276,7 @@ export default function Dashboard() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [tab, setTab] = useState("chat");
   const [brainOpen, setBrainOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
   const [podcastAutoGenerate, setPodcastAutoGenerate] = useState(false);
   const [podcastCustomContext, setPodcastCustomContext] = useState<string | undefined>(undefined);
@@ -301,6 +302,18 @@ export default function Dashboard() {
     window.addEventListener("prefs-saved", handler);
     return () => window.removeEventListener("prefs-saved", handler);
   }, []);
+
+  useEffect(() => {
+    setSidebarCollapsed(localStorage.getItem("sidebar_collapsed") === "true");
+  }, []);
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((c) => {
+      const next = !c;
+      localStorage.setItem("sidebar_collapsed", String(next));
+      return next;
+    });
+  };
 
   // Language
   const [lang, setLang] = useState<Lang>("en");
@@ -455,6 +468,8 @@ export default function Dashboard() {
           activeTab={tab}
           onTabChange={handleTabChange}
           courseColor={course?.color}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={toggleSidebar}
         />
 
         {/* Main content */}

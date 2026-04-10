@@ -49,6 +49,19 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
   const [imageSubmitState, setImageSubmitState] = useState<"idle" | "submitted" | "error">("idle");
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [sessionsOpen, setSessionsOpen] = useState(true);
+
+  useEffect(() => {
+    setSessionsOpen(localStorage.getItem("chat_sessions_open") !== "false");
+  }, []);
+
+  const toggleSessions = () => {
+    setSessionsOpen((prev) => {
+      const next = !prev;
+      localStorage.setItem("chat_sessions_open", String(next));
+      return next;
+    });
+  };
 
   // Load sessions list
   const loadSessions = useCallback(async () => {
@@ -278,49 +291,73 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
         onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageFile(f); e.target.value = ""; }}
       />
 
-      {/* Sessions sidebar */}
-      <div className="w-52 border-r border-border flex flex-col bg-bg">
-        <div className="px-3 py-3 border-b border-border">
+      {/* Sessions sidebar — collapsible */}
+      {!sessionsOpen ? (
+        <div
+          className="border-r border-border flex flex-col items-center pt-2 bg-bg"
+          style={{ width: 32, minWidth: 32, flexShrink: 0 }}
+        >
           <button
-            onClick={startNewChat}
-            className="w-full rounded-lg px-3 py-2 text-xs font-semibold text-bg"
-            style={{ background: color }}
-          >
-            {T("chat.new_chat")}
-          </button>
+            onClick={toggleSessions}
+            title="Show chat sessions"
+            className="w-7 h-7 flex items-center justify-center rounded-lg transition-all"
+            style={{ color: "var(--color-muted)", fontSize: 16, background: "transparent", border: "none", cursor: "pointer" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--color-bg-raised)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+          >›</button>
         </div>
-        <div className="flex-1 overflow-y-auto px-2 py-2">
-          {sessions.map((s) => (
-            <div
-              key={s.id}
-              onClick={() => loadSession(s.id)}
-              className={`px-3 py-2.5 rounded-lg mb-1 cursor-pointer transition-all group ${
-                s.id === activeSessionId
-                  ? "bg-bg-raised border border-border-light"
-                  : "hover:bg-bg-raised/50 border border-transparent"
-              }`}
+      ) : (
+        <div className="border-r border-border flex flex-col bg-bg" style={{ width: 208, minWidth: 208, flexShrink: 0 }}>
+          <div className="px-3 py-3 border-b border-border flex items-center gap-2">
+            <button
+              onClick={startNewChat}
+              className="flex-1 rounded-lg px-3 py-2 text-xs font-semibold text-bg"
+              style={{ background: color }}
             >
-              <div className="flex items-start justify-between gap-1">
-                <p className="text-xs font-medium truncate flex-1 leading-tight" style={{ color: "var(--color-text)" }}>
-                  {s.title}
+              {T("chat.new_chat")}
+            </button>
+            <button
+              onClick={toggleSessions}
+              title="Collapse"
+              className="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg transition-all"
+              style={{ color: "var(--color-muted)", fontSize: 16, background: "transparent", border: "none", cursor: "pointer" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--color-bg-raised)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >‹</button>
+          </div>
+          <div className="flex-1 overflow-y-auto px-2 py-2">
+            {sessions.map((s) => (
+              <div
+                key={s.id}
+                onClick={() => loadSession(s.id)}
+                className={`px-3 py-2.5 rounded-lg mb-1 cursor-pointer transition-all group ${
+                  s.id === activeSessionId
+                    ? "bg-bg-raised border border-border-light"
+                    : "hover:bg-bg-raised/50 border border-transparent"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-1">
+                  <p className="text-xs font-medium truncate flex-1 leading-tight" style={{ color: "var(--color-text)" }}>
+                    {s.title}
+                  </p>
+                  <button
+                    onClick={(e) => deleteSession(s.id, e)}
+                    className="text-muted hover:text-danger text-[12px] opacity-0 group-hover:opacity-100 shrink-0"
+                  >
+                    x
+                  </button>
+                </div>
+                <p className="text-xs mt-1" style={{ color: "var(--color-muted-light)" }}>
+                  {s.messageCount} msgs · {new Date(s.date).toLocaleDateString()}
                 </p>
-                <button
-                  onClick={(e) => deleteSession(s.id, e)}
-                  className="text-muted hover:text-danger text-[12px] opacity-0 group-hover:opacity-100 shrink-0"
-                >
-                  x
-                </button>
               </div>
-              <p className="text-xs mt-1" style={{ color: "var(--color-muted-light)" }}>
-                {s.messageCount} msgs · {new Date(s.date).toLocaleDateString()}
-              </p>
-            </div>
-          ))}
-          {!sessions.length && (
-            <p className="text-[12px] text-muted text-center py-4">{T("chat.no_conversations")}</p>
-          )}
+            ))}
+            {!sessions.length && (
+              <p className="text-[12px] text-muted text-center py-4">{T("chat.no_conversations")}</p>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main chat area */}
       <div className="flex-1 flex flex-col">
@@ -337,7 +374,7 @@ export default function ChatTab({ courseId, color, name, initialSessionId, onAct
                     key={s}
                     onClick={() => setInput(s)}
                     className="bg-bg-card border border-border-light rounded-lg px-3 py-2 text-sm font-medium hover:bg-bg-raised transition-all"
-                    style={{ color: "var(--color-text)" }}
+                    style={{ color: "var(--color-muted-light)" }}
                   >
                     {s}
                   </button>
