@@ -45,14 +45,22 @@ export async function POST(req: NextRequest) {
     });
     const courseName = course?.name || "Course";
 
-    // Pull course chunks as context
+    // Pull course chunks as context (cap at 30 — Claude's prompt instructions
+    // need to fit alongside these without truncation)
     const chunks = await prisma.chunk.findMany({
       where: { courseId },
       select: { title: true, text: true, chunkIndex: true },
       orderBy: { chunkIndex: "asc" },
-      take: 60,
+      take: 30,
     });
     const context = chunks.length ? buildContext(chunks) : "";
+    console.log("[slidedeck] Starting generation", {
+      courseId,
+      topic: topic.trim().slice(0, 80),
+      slideCount,
+      chunkCount: chunks.length,
+      contextLength: context.length,
+    });
 
     const LANG_NAMES: Record<string, string> = {
       en: "English",
@@ -238,29 +246,52 @@ REMEMBER: If you produce a deck where every slide is just a "bullets" component,
       16000
     );
 
-    // Parse Claude's JSON response
+    console.log("[slidedeck] Claude responded", {
+      rawLength: raw?.length || 0,
+      startsWith: (raw || "").slice(0, 80),
+      endsWith: (raw || "").slice(-80),
+    });
+
+    // Parse Claude's JSON response — be aggressive about finding valid JSON
     let parsed: { deckTitle: string; subtitle?: string; slides: Slide[] };
     try {
-      parsed = JSON.parse(raw);
-    } catch {
-      const match = raw.match(/\{[\s\S]*\}/);
-      if (!match) {
+      // Strip markdown code fences if present
+      const cleaned = raw
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```\s*$/i, "")
+        .trim();
+      parsed = JSON.parse(cleaned);
+    } catch (parseErr) {
+      // Fall back: find the first { and match braces
+      const start = raw.indexOf("{");
+      const end = raw.lastIndexOf("}");
+      if (start < 0 || end <= start) {
+        console.error("[slidedeck] Cannot find JSON in response:", raw.slice(0, 500));
         return NextResponse.json(
-          { error: "Failed to parse slide deck structure from Claude response" },
+          {
+            error: `Claude returned non-JSON output. First 300 chars: ${raw.slice(0, 300)}`,
+          },
           { status: 500 }
         );
       }
-      parsed = JSON.parse(match[0]);
+      try {
+        parsed = JSON.parse(raw.slice(start, end + 1));
+      } catch (secondErr: any) {
+        console.error("[slidedeck] JSON parse failed:", secondErr?.message, raw.slice(0, 500));
+        return NextResponse.json(
+          {
+            error: `Slide deck JSON parse error: ${secondErr?.message || "unknown"}. Response started with: ${raw.slice(0, 200)}`,
+          },
+          { status: 500 }
+        );
+      }
     }
 
     if (!parsed?.slides || !Array.isArray(parsed.slides) || !parsed.slides.length) {
       return NextResponse.json({ error: "No slides generated" }, { status: 500 });
     }
 
-    // ── Component diversity audit ──
-    // If the deck is mostly bullet lists, Claude ignored the prompt — reject it
-    // and ask the frontend to retry. This prevents plain-text decks from slipping
-    // through.
+    // ── Component diversity audit (soft — logs only, never rejects) ──
     const counts: Record<string, number> = {
       grid2: 0, grid3: 0, quote: 0, sbox: 0, formula: 0, table: 0,
       bullets: 0, icard: 0, segments: 0,
@@ -270,31 +301,15 @@ REMEMBER: If you produce a deck where every slide is just a "bullets" component,
       if (!Array.isArray(s.body)) continue;
       const types = s.body.map((c: any) => c?.type).filter(Boolean);
       for (const t of types) counts[t] = (counts[t] || 0) + 1;
-      // A slide is "bullet-only" if every component is bullets
       if (types.length > 0 && types.every((t: string) => t === "bullets")) {
         bulletOnlySlides++;
       }
     }
-
-    const richCount = counts.grid2 + counts.grid3 + counts.sbox + counts.quote + counts.formula + counts.table + counts.segments + counts.icard;
-    const tooManyBulletsOnly = bulletOnlySlides > Math.floor(parsed.slides.length * 0.3);
-    const notEnoughRichness = richCount < Math.floor(parsed.slides.length * 0.6);
-
-    if (tooManyBulletsOnly || notEnoughRichness) {
-      console.warn("[slidedeck] Rejected deck — insufficient component variety", {
-        totalSlides: parsed.slides.length,
-        bulletOnlySlides,
-        richCount,
-        counts,
-      });
-      return NextResponse.json(
-        {
-          error: `The generated deck lacks visual variety (${bulletOnlySlides} bullet-only slides, only ${richCount} rich components). Please try again — Claude occasionally ignores formatting instructions on the first try.`,
-          audit: { counts, bulletOnlySlides, richCount },
-        },
-        { status: 422 }
-      );
-    }
+    console.log("[slidedeck] Diversity audit:", {
+      totalSlides: parsed.slides.length,
+      bulletOnlySlides,
+      counts,
+    });
 
     // Save to DB as a Video row with sourceType="slidedeck"
     const deckTitle =
