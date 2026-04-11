@@ -69,72 +69,168 @@ export async function POST(req: NextRequest) {
 
     const prefs = await getUserPrefsPrompt((session.user as any).id);
 
-    const systemPrompt = `${prefs}You are an expert academic course designer creating a rich, visually structured interactive slide deck for the course "${courseName}".
+    // ── HARD component quotas based on slide count ──
+    // These force variety so Claude cannot default to "all bullet lists"
+    const minGrid2   = Math.max(4, Math.floor(slideCount * 0.20)); // ≥20% must use grid2
+    const minGrid3   = Math.max(2, Math.floor(slideCount * 0.10)); // ≥10% must use grid3
+    const minQuote   = Math.max(3, Math.floor(slideCount * 0.12)); // ≥12% must have a quote
+    const minSBox    = Math.max(3, Math.floor(slideCount * 0.15)); // ≥15% must use sbox
+    const minFormula = Math.max(2, Math.floor(slideCount * 0.08)); // ≥8% must have formula
+    const minTable   = 1;
+    const maxAllBullets = Math.floor(slideCount * 0.25);           // ≤25% may be bullets-only
 
-Your task: write a ${slideCount}-slide deck on the topic: "${topic.trim()}"
+    const systemPrompt = `${prefs}You are creating a RICH, VISUALLY STRUCTURED interactive slide deck for the course "${courseName}". The target quality is comparable to professionally-designed course materials with colored callout boxes, comparison grids, quote blocks, formula panels, and data tables — NOT plain bullet lists.
 
-Return ONLY a valid JSON object — no markdown fences, no commentary, no text before or after.
+Topic: "${topic.trim()}"
+Exact slide count: ${slideCount}
 
-STRUCTURE:
+Return ONLY a valid JSON object. No markdown fences. No commentary.
+
+═══════════════════════════════════════════════════════════════
+JSON STRUCTURE
+═══════════════════════════════════════════════════════════════
 {
-  "deckTitle": "Overall deck title (under 70 chars)",
-  "subtitle": "Short description of the deck (under 120 chars)",
-  "slides": [ /* exactly ${slideCount} slide objects */ ]
+  "deckTitle": "string (max 70 chars)",
+  "subtitle":  "string (max 120 chars)",
+  "slides": [ /* exactly ${slideCount} slides */ ]
 }
 
-EACH SLIDE OBJECT:
+Each slide:
 {
-  "tag": "Short eyebrow label (max 45 chars) — e.g. 'Chapter 6 — Value Creation' or 'Step 1 — Value Drivers'",
+  "tag":      "Eyebrow label, max 45 chars (e.g. 'Chapter 6 — Value Creation')",
   "tagColor": "p" | "t" | "c" | "a" | "g" | "b" | "r",
-  "title": "Slide title (max 70 chars)",
-  "body": [ /* ordered list of visual components */ ]
+  "title":    "Slide title, max 70 chars",
+  "body":     [ /* 2–4 visual components from the list below */ ]
 }
 
-VISUAL COMPONENTS AVAILABLE (mix and match — be creative, use at least 2 components per slide):
+Color codes: p=purple | t=teal | c=coral | a=amber | g=green | b=blue | r=red
 
-1. BULLETS — colored-dot bullet list:
-   {"type":"bullets","items":[{"text":"Bullet content. **Bold** is allowed.","color":"p"},{"text":"Next bullet","color":"t"}]}
-   Colors: p=purple, t=teal, c=coral, a=amber, g=green, b=blue, r=red. Omit for default purple.
+═══════════════════════════════════════════════════════════════
+VISUAL COMPONENTS (USE A VARIETY — THIS IS CRITICAL)
+═══════════════════════════════════════════════════════════════
 
-2. SBOX — single colored callout box:
-   {"type":"sbox","box":{"color":"t","title":"Definition","body":"Explanation with **bold** words."}}
+▶ GRID2 — two colored boxes side-by-side (use for: comparisons, contrasts, pros/cons, two perspectives)
+{"type":"grid2","boxes":[
+  {"color":"t","title":"Monetary value","body":"Direct financial benefits: **revenue, margins, ROI**."},
+  {"color":"p","title":"Strategic value","body":"Brand equity, **long-term positioning**, portfolio synergies."}
+]}
 
-3. GRID2 — two side-by-side colored boxes (perfect for comparisons):
-   {"type":"grid2","boxes":[{"color":"t","title":"Option A","body":"..."},{"color":"p","title":"Option B","body":"..."}]}
+▶ GRID3 — three colored boxes (use for: 3-way comparisons, 3-step processes, 3 categories)
+{"type":"grid3","boxes":[
+  {"color":"b","title":"Demographic","body":"Age, income, education, occupation"},
+  {"color":"p","title":"Geographic","body":"Region, urban vs. rural, climate"},
+  {"color":"t","title":"Behavioral","body":"Purchase frequency, brand loyalty"}
+]}
 
-4. GRID3 — three-column colored boxes:
-   {"type":"grid3","boxes":[{"color":"b","title":"Step 1","body":"..."},{"color":"p","title":"Step 2","body":"..."},{"color":"t","title":"Step 3","body":"..."}]}
+▶ SBOX — single colored callout (use for: definitions, key concepts, "what it is" sections)
+{"type":"sbox","box":{"color":"a","title":"Core insight","body":"Profit = revenue minus all costs. **Three levers**: grow revenue, cut costs, optimize price."}}
 
-5. QUOTE — italicized quote block with colored left border:
-   {"type":"quote","text":"A memorable insight or direct quote with attribution.","color":"a"}
-   Colors: omit=purple, "t"=teal, "a"=amber
+▶ QUOTE — italicized quote block with colored left border (use for: memorable insights, famous quotes, cross-links between ideas)
+{"type":"quote","text":"\\"The customer is the only one who can fire us all.\\" — Sam Walton","color":"a"}
 
-6. FORMULA — centered monospace formula/equation panel:
-   {"type":"formula","text":"Profit = Revenue × Margin − Fixed Costs"}
+▶ FORMULA — centered monospace equation (use for: ANY calculation, ratio, or formula)
+{"type":"formula","text":"Break-even Volume = Fixed Costs ÷ (Unit Price − Unit Variable Cost)"}
 
-7. ICARD — plain info card with small-caps title:
-   {"type":"icard","title":"EXAMPLE","body":"Walk through a worked example or case study."}
+▶ ICARD — plain info card with small-caps title (use for: worked examples, case studies, side notes)
+{"type":"icard","title":"EXAMPLE — STARBUCKS","body":"Starbucks earns **monetary value** through coffee sales while its social initiatives build **strategic value** — brand strength that drives long-term growth."}
 
-8. TABLE — data table:
-   {"type":"table","headers":["Metric","Formula","Meaning"],"rows":[{"cells":["Gross margin","(Rev−COGS)/Rev","% kept after production"]}]}
+▶ TABLE — data table (use for: metrics lists, comparison matrices, income statements)
+{"type":"table","headers":["Metric","Formula","Meaning"],"rows":[
+  {"cells":["Gross margin","(Rev − COGS) / Rev","% kept after production"]},
+  {"cells":["Net margin","Net Income / Rev","% kept as profit"]},
+  {"cells":["ROI","Net Return / Cost","Return as percentage"]}
+]}
 
-9. SEGMENTS — three labeled segment cards (for market segments, types, categories):
-   {"type":"segments","items":[{"color":"con","name":"Consumer","text":"..."},{"color":"trd","name":"Trade","text":"..."},{"color":"ind","name":"Industrial","text":"..."}]}
+▶ BULLETS — colored-dot list (use SPARINGLY, only as a supporting element — NEVER as the sole component)
+{"type":"bullets","items":[
+  {"text":"Primary point with **bold** emphasis.","color":"t"},
+  {"text":"Secondary point showing relation.","color":"a"},
+  {"text":"Closing insight that ties the slide together.","color":"p"}
+]}
 
-CRITICAL RULES:
-- Vary component usage across slides — don't make every slide a bullets list. Use grids, quotes, tables, formulas, sboxes liberally.
-- When discussing calculations or metrics, ALWAYS include a FORMULA component with a worked example.
-- When comparing two things, use GRID2. When comparing three, use GRID3 or SEGMENTS.
-- When citing memorable phrases or insights, use QUOTE.
-- Use bold (**word**) to emphasize key terms within body text.
-- Slide 1 = introduction/overview (use QUOTE + BULLETS + SBOX).
-- Last slide = combined takeaways (use BULLETS with varied colors).
-- Color intent: p=primary/default, t=positive/correct/key, c=warning/caution, a=emphasis/highlight, g=benefits/success, b=informational, r=risk/drawback.
-- Ground all content in the course materials below. Use real examples and specific details from the materials.
-- Titles and bodies must be concise and scannable — aim for richness through components, not walls of text.
+▶ SEGMENTS — three labeled segment cards (use for: market segments, customer types)
+{"type":"segments","items":[
+  {"color":"con","name":"Consumer","text":"Household use. **Priority: price**."},
+  {"color":"trd","name":"Trade","text":"Daily professional use. **Priority: reliability & brand**."},
+  {"color":"ind","name":"Industrial","text":"Bulk purchases. **Priority: power**."}
+]}
 
-COURSE MATERIALS:
-${context || "No materials loaded — use general academic knowledge of the topic."}${langInstruction}`;
+═══════════════════════════════════════════════════════════════
+HARD REQUIREMENTS (ENFORCED — THE DECK WILL BE REJECTED IF NOT MET)
+═══════════════════════════════════════════════════════════════
+
+1. COMPONENT QUOTAS (minimum counts across the ${slideCount}-slide deck):
+   • At least ${minGrid2} slides must contain GRID2
+   • At least ${minGrid3} slides must contain GRID3
+   • At least ${minQuote} slides must contain QUOTE
+   • At least ${minSBox} slides must contain SBOX
+   • At least ${minFormula} slides must contain FORMULA (or 0 if no calculations apply at all)
+   • At least ${minTable} slide must contain TABLE
+   • No more than ${maxAllBullets} slides may use ONLY bullets as their body
+
+2. Every slide must have 2–4 components in its body. A single-component slide is rejected.
+
+3. Use tagColor to establish visual rhythm — alternate between colors across slides, don't use the same color for every tag.
+
+4. Inside component bodies, use **bold** to emphasize key terms.
+
+5. Ground all content in the course materials below. Use real examples, real numbers, real case studies from the materials when available.
+
+═══════════════════════════════════════════════════════════════
+FULL EXAMPLE (imitate this diversity across your deck)
+═══════════════════════════════════════════════════════════════
+
+Example slide 1 — introduction with QUOTE + BULLETS:
+{
+  "tag":"Introduction","tagColor":"a",
+  "title":"Two dimensions of company value",
+  "body":[
+    {"type":"quote","text":"Value creation is the foundation of any successful market strategy.","color":"a"},
+    {"type":"grid2","boxes":[
+      {"color":"t","title":"Monetary value","body":"Direct **financial benefits**: revenue, margins, ROI."},
+      {"color":"p","title":"Strategic value","body":"Non-monetary: **brand, reputation**, talent, synergies."}
+    ]},
+    {"type":"bullets","items":[
+      {"text":"Both must work **simultaneously** — neither alone is sufficient.","color":"t"},
+      {"text":"Strategic value compounds into monetary value over time.","color":"a"}
+    ]}
+  ]
+}
+
+Example slide 2 — calculation with FORMULA + SBOX:
+{
+  "tag":"Break-even","tagColor":"p",
+  "title":"How many units to break even",
+  "body":[
+    {"type":"formula","text":"BEV = Fixed Costs ÷ (Unit Price − Unit Variable Cost)"},
+    {"type":"icard","title":"WORKED EXAMPLE","body":"Price $100, variable cost $50, fixed investment $50M → BEV = **1,000,000 units** required to break even."},
+    {"type":"sbox","box":{"color":"c","title":"Warning","body":"A price cut **doubles** the break-even volume if margin halves."}}
+  ]
+}
+
+Example slide 3 — comparison with TABLE:
+{
+  "tag":"Metrics","tagColor":"b",
+  "title":"Performance metrics every manager must know",
+  "body":[
+    {"type":"table","headers":["Metric","Formula","Meaning"],"rows":[
+      {"cells":["Gross margin","(Rev − COGS) / Rev","% remaining after production"]},
+      {"cells":["Net margin","Net Income / Rev","Final profit %"]},
+      {"cells":["ROI","Net Return / Cost","Investment efficiency"]},
+      {"cells":["Market share","Offering Sales / Total","Share of category"]}
+    ]},
+    {"type":"bullets","items":[
+      {"text":"These metrics **trace revenue down to profit** line by line.","color":"p"}
+    ]}
+  ]
+}
+
+═══════════════════════════════════════════════════════════════
+COURSE MATERIALS TO DRAW FROM
+═══════════════════════════════════════════════════════════════
+${context || "No materials loaded — use accurate academic knowledge of the topic."}${langInstruction}
+
+REMEMBER: If you produce a deck where every slide is just a "bullets" component, the deck will be REJECTED. Use grids, quotes, tables, formulas, and sboxes generously — they are the entire point.`;
 
     const raw = await askClaude(
       systemPrompt,
@@ -159,6 +255,45 @@ ${context || "No materials loaded — use general academic knowledge of the topi
 
     if (!parsed?.slides || !Array.isArray(parsed.slides) || !parsed.slides.length) {
       return NextResponse.json({ error: "No slides generated" }, { status: 500 });
+    }
+
+    // ── Component diversity audit ──
+    // If the deck is mostly bullet lists, Claude ignored the prompt — reject it
+    // and ask the frontend to retry. This prevents plain-text decks from slipping
+    // through.
+    const counts: Record<string, number> = {
+      grid2: 0, grid3: 0, quote: 0, sbox: 0, formula: 0, table: 0,
+      bullets: 0, icard: 0, segments: 0,
+    };
+    let bulletOnlySlides = 0;
+    for (const s of parsed.slides) {
+      if (!Array.isArray(s.body)) continue;
+      const types = s.body.map((c: any) => c?.type).filter(Boolean);
+      for (const t of types) counts[t] = (counts[t] || 0) + 1;
+      // A slide is "bullet-only" if every component is bullets
+      if (types.length > 0 && types.every((t: string) => t === "bullets")) {
+        bulletOnlySlides++;
+      }
+    }
+
+    const richCount = counts.grid2 + counts.grid3 + counts.sbox + counts.quote + counts.formula + counts.table + counts.segments + counts.icard;
+    const tooManyBulletsOnly = bulletOnlySlides > Math.floor(parsed.slides.length * 0.3);
+    const notEnoughRichness = richCount < Math.floor(parsed.slides.length * 0.6);
+
+    if (tooManyBulletsOnly || notEnoughRichness) {
+      console.warn("[slidedeck] Rejected deck — insufficient component variety", {
+        totalSlides: parsed.slides.length,
+        bulletOnlySlides,
+        richCount,
+        counts,
+      });
+      return NextResponse.json(
+        {
+          error: `The generated deck lacks visual variety (${bulletOnlySlides} bullet-only slides, only ${richCount} rich components). Please try again — Claude occasionally ignores formatting instructions on the first try.`,
+          audit: { counts, bulletOnlySlides, richCount },
+        },
+        { status: 422 }
+      );
     }
 
     // Save to DB as a Video row with sourceType="slidedeck"
