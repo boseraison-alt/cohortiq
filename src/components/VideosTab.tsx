@@ -636,6 +636,22 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
     setErrorMsg(""); setProgress(0); setElapsed(0); setSlides([]); setGenVideo(null);
     setActiveVideo(null);
 
+    // Helper — robustly extract an error message even if the response isn't JSON
+    const extractError = async (res: Response, fallback: string) => {
+      const text = await res.text();
+      try {
+        const j = JSON.parse(text);
+        return j.error || fallback;
+      } catch {
+        // Non-JSON response (e.g. Railway "Service Unavailable", HTML error page)
+        if (res.status === 503) return "Server temporarily unavailable — Railway may still be deploying. Try again in 1–2 minutes.";
+        if (res.status === 504) return "Request timed out — generation took too long. Try a shorter duration or fewer slides.";
+        if (res.status === 502) return "Bad gateway — the server is restarting. Try again shortly.";
+        if (res.status >= 500) return `Server error (${res.status}). Please try again in a moment.`;
+        return text.slice(0, 200) || fallback;
+      }
+    };
+
     try {
       // Phase 1 — Generate structured slides
       const slidesRes = await fetch("/api/ai/narration", {
@@ -644,7 +660,7 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
         body: JSON.stringify({ courseId, topic: topic.trim(), duration, lang }),
         signal,
       });
-      if (!slidesRes.ok) throw new Error((await slidesRes.json()).error || "Slide generation failed");
+      if (!slidesRes.ok) throw new Error(await extractError(slidesRes, "Slide generation failed"));
       const slidesData = await slidesRes.json();
       setSlides(slidesData.slides);
 
@@ -661,7 +677,7 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
         }),
         signal,
       });
-      if (!videoRes.ok) throw new Error((await videoRes.json()).error || "Video generation failed");
+      if (!videoRes.ok) throw new Error(await extractError(videoRes, "Video generation failed"));
       const videoData = await videoRes.json();
 
       setGenVideo(videoData.video);
