@@ -1,0 +1,344 @@
+/**
+ * Rich slide SVG renderer for videos.
+ *
+ * Takes a slide in the same JSON format as the HTML slide deck
+ * (tag, title, body components) and produces a 1920×1080 SVG rendering
+ * on a dark background, suitable for conversion to PNG via resvg-js and
+ * compositing into an MP4 video with FFmpeg.
+ *
+ * Reuses the existing video pipeline (resvg-js + DejaVu fonts + FFmpeg)
+ * so it runs on Railway with zero new dependencies.
+ *
+ * Supported components (from slideDeckTemplate.ts):
+ *   - bullets, sbox, grid2, grid3, quote, formula, icard, table, segments
+ */
+
+import type { Slide, SlideColor, SlideComponent, SBoxItem } from "./slideDeckTemplate";
+
+const W = 1920;
+const H = 1080;
+
+// Colors — semi-transparent tints that look good on dark backgrounds
+const COLORS: Record<SlideColor, { fg: string; bg: string; border: string }> = {
+  p: { fg: "#BBB4F7", bg: "#534AB7", border: "#AFA9EC" }, // purple
+  t: { fg: "#9FE1CB", bg: "#1D9E75", border: "#9FE1CB" }, // teal
+  c: { fg: "#F5C4B3", bg: "#D85A30", border: "#F5C4B3" }, // coral
+  a: { fg: "#FAC775", bg: "#BA7517", border: "#FAC775" }, // amber
+  b: { fg: "#B5D4F4", bg: "#378ADD", border: "#B5D4F4" }, // blue
+  g: { fg: "#C0DD97", bg: "#639922", border: "#C0DD97" }, // green
+  r: { fg: "#F5A5A5", bg: "#E24B4A", border: "#F5A5A5" }, // red
+};
+
+const BG      = "#0B0D10";
+const CARD_BG = "#181B22";
+const TEXT    = "#E4DED4";
+const MUTED   = "#8A8275";
+const BORDER  = "#2B2F38";
+
+// ── XML escape ──
+function esc(s: string): string {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+// Strip **bold** markers (SVG doesn't support inline bold)
+function stripBold(s: string): string {
+  return s.replace(/\*\*(.+?)\*\*/g, "$1");
+}
+
+// Wrap text at word boundaries to fit a max character width
+function wrapText(text: string, maxChars: number): string[] {
+  const clean = stripBold(text);
+  const words = clean.split(/\s+/);
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    if ((current + " " + word).trim().length > maxChars) {
+      if (current.trim()) lines.push(current.trim());
+      current = word;
+    } else {
+      current = current ? current + " " + word : word;
+    }
+  }
+  if (current.trim()) lines.push(current.trim());
+  return lines;
+}
+
+// ── Layout constants ──
+const PAD_X = 100;
+const BODY_W = W - PAD_X * 2; // 1720
+const BODY_START_Y = 240;
+const BODY_END_Y = 1000;
+const BODY_H = BODY_END_Y - BODY_START_Y; // 760
+
+// ── Component renderers (each returns SVG string + height consumed) ──
+
+function renderSBox(box: SBoxItem, x: number, y: number, width: number, height: number): string {
+  const color = COLORS[box.color] || COLORS.p;
+  const titleLines = wrapText(box.title, Math.floor(width / 14));
+  const bodyLines = wrapText(box.body, Math.floor(width / 11));
+  const maxTitleLines = Math.min(titleLines.length, 2);
+  const maxBodyLines = Math.min(bodyLines.length, Math.floor((height - 60) / 32));
+
+  let out = "";
+  // Background fill (semi-transparent) + border
+  out += `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="14" fill="${color.bg}" fill-opacity="0.18" stroke="${color.bg}" stroke-opacity="0.55" stroke-width="2"/>\n`;
+
+  // Title
+  let cy = y + 42;
+  for (let i = 0; i < maxTitleLines; i++) {
+    out += `<text x="${x + 24}" y="${cy}" fill="${color.fg}" font-size="26" font-weight="bold" font-family="sans-serif">${esc(titleLines[i])}</text>\n`;
+    cy += 32;
+  }
+  cy += 8;
+
+  // Body
+  for (let i = 0; i < maxBodyLines; i++) {
+    out += `<text x="${x + 24}" y="${cy}" fill="${TEXT}" font-size="22" font-family="sans-serif">${esc(bodyLines[i])}</text>\n`;
+    cy += 32;
+  }
+  return out;
+}
+
+function renderGrid(c: { type: "grid2" | "grid3"; boxes: SBoxItem[] }, y: number): { svg: string; height: number } {
+  const isGrid2 = c.type === "grid2";
+  const cols = isGrid2 ? 2 : 3;
+  const gap = 24;
+  const boxW = Math.floor((BODY_W - gap * (cols - 1)) / cols);
+  const boxH = 280;
+
+  let out = "";
+  const boxes = c.boxes.slice(0, cols);
+  for (let i = 0; i < boxes.length; i++) {
+    const bx = PAD_X + i * (boxW + gap);
+    out += renderSBox(boxes[i], bx, y, boxW, boxH);
+  }
+  return { svg: out, height: boxH + 20 };
+}
+
+function renderQuote(c: { type: "quote"; text: string; color?: "p" | "t" | "a" }, y: number): { svg: string; height: number } {
+  const col = COLORS[(c.color || "p") as SlideColor];
+  const lines = wrapText(c.text, 110);
+  const maxLines = Math.min(lines.length, 4);
+  const h = 40 + maxLines * 38 + 30;
+
+  let out = "";
+  // Background + left border
+  out += `<rect x="${PAD_X}" y="${y}" width="${BODY_W}" height="${h}" rx="12" fill="${col.bg}" fill-opacity="0.15"/>\n`;
+  out += `<rect x="${PAD_X}" y="${y}" width="7" height="${h}" fill="${col.bg}"/>\n`;
+
+  let cy = y + 45;
+  for (let i = 0; i < maxLines; i++) {
+    out += `<text x="${PAD_X + 28}" y="${cy}" fill="${col.fg}" font-size="26" font-style="italic" font-family="serif">${esc(lines[i])}</text>\n`;
+    cy += 38;
+  }
+  return { svg: out, height: h + 20 };
+}
+
+function renderFormula(c: { type: "formula"; text: string }, y: number): { svg: string; height: number } {
+  const h = 100;
+  const text = stripBold(c.text);
+
+  let out = "";
+  out += `<rect x="${PAD_X}" y="${y}" width="${BODY_W}" height="${h}" rx="12" fill="${CARD_BG}" stroke="${BORDER}" stroke-width="1.5"/>\n`;
+  out += `<text x="${W / 2}" y="${y + h / 2 + 12}" text-anchor="middle" fill="${TEXT}" font-size="34" font-weight="bold" font-family="monospace">${esc(text)}</text>\n`;
+  return { svg: out, height: h + 20 };
+}
+
+function renderICard(c: { type: "icard"; title: string; body: string }, y: number): { svg: string; height: number } {
+  const lines = wrapText(c.body, 110);
+  const maxLines = Math.min(lines.length, 5);
+  const h = 50 + maxLines * 34 + 24;
+
+  let out = "";
+  out += `<rect x="${PAD_X}" y="${y}" width="${BODY_W}" height="${h}" rx="12" fill="${CARD_BG}" stroke="${BORDER}" stroke-width="1.5"/>\n`;
+  out += `<text x="${PAD_X + 24}" y="${y + 32}" fill="${MUTED}" font-size="16" font-weight="bold" font-family="monospace" letter-spacing="2">${esc(c.title.toUpperCase())}</text>\n`;
+
+  let cy = y + 66;
+  for (let i = 0; i < maxLines; i++) {
+    out += `<text x="${PAD_X + 24}" y="${cy}" fill="${TEXT}" font-size="22" font-family="sans-serif">${esc(lines[i])}</text>\n`;
+    cy += 34;
+  }
+  return { svg: out, height: h + 20 };
+}
+
+function renderBullets(
+  c: { type: "bullets"; items: { text: string; color?: SlideColor }[] },
+  y: number
+): { svg: string; height: number } {
+  let out = "";
+  let cy = y + 8;
+  const items = c.items.slice(0, 6);
+
+  for (const item of items) {
+    const col = COLORS[item.color || "p"];
+    const lines = wrapText(item.text, 95);
+    const maxLines = Math.min(lines.length, 3);
+    // Dot
+    out += `<circle cx="${PAD_X + 16}" cy="${cy + 2}" r="7" fill="${col.bg}"/>\n`;
+    for (let i = 0; i < maxLines; i++) {
+      out += `<text x="${PAD_X + 40}" y="${cy + i * 34}" fill="${TEXT}" font-size="24" font-family="sans-serif">${esc(lines[i])}</text>\n`;
+    }
+    cy += maxLines * 34 + 16;
+  }
+  return { svg: out, height: cy - y + 10 };
+}
+
+function renderTable(
+  c: { type: "table"; headers: string[]; rows: { cells: string[] }[] },
+  y: number
+): { svg: string; height: number } {
+  const cols = c.headers.length || 1;
+  const colW = Math.floor(BODY_W / cols);
+  const rowH = 50;
+  const maxRows = Math.min(c.rows.length, 8);
+  const h = rowH * (maxRows + 1) + 24;
+
+  let out = "";
+  out += `<rect x="${PAD_X}" y="${y}" width="${BODY_W}" height="${h}" rx="12" fill="${CARD_BG}" stroke="${BORDER}" stroke-width="1.5"/>\n`;
+
+  // Header row
+  for (let i = 0; i < cols; i++) {
+    const hx = PAD_X + i * colW + 24;
+    out += `<text x="${hx}" y="${y + 40}" fill="${MUTED}" font-size="18" font-weight="bold" font-family="monospace" letter-spacing="1">${esc(stripBold(c.headers[i] || "").toUpperCase())}</text>\n`;
+  }
+  // Divider under header
+  out += `<line x1="${PAD_X + 16}" y1="${y + rowH + 4}" x2="${PAD_X + BODY_W - 16}" y2="${y + rowH + 4}" stroke="${BORDER}" stroke-width="1"/>\n`;
+
+  // Data rows
+  for (let r = 0; r < maxRows; r++) {
+    const row = c.rows[r];
+    const ry = y + rowH * (r + 1) + 38;
+    for (let i = 0; i < cols; i++) {
+      const cx = PAD_X + i * colW + 24;
+      const txt = stripBold(row.cells[i] || "").slice(0, 32);
+      out += `<text x="${cx}" y="${ry}" fill="${TEXT}" font-size="20" font-family="sans-serif">${esc(txt)}</text>\n`;
+    }
+    if (r < maxRows - 1) {
+      out += `<line x1="${PAD_X + 16}" y1="${ry + 12}" x2="${PAD_X + BODY_W - 16}" y2="${ry + 12}" stroke="${BORDER}" stroke-opacity="0.5" stroke-width="1"/>\n`;
+    }
+  }
+  return { svg: out, height: h + 20 };
+}
+
+function renderSegments(
+  c: { type: "segments"; items: { color: "con" | "trd" | "ind"; name: string; text: string }[] },
+  y: number
+): { svg: string; height: number } {
+  const segColors: Record<string, SlideColor> = { con: "b", trd: "p", ind: "t" };
+  const cols = 3;
+  const gap = 24;
+  const boxW = Math.floor((BODY_W - gap * (cols - 1)) / cols);
+  const boxH = 280;
+
+  let out = "";
+  const items = c.items.slice(0, 3);
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const box: SBoxItem = {
+      color: segColors[item.color] || "p",
+      title: item.name,
+      body: item.text,
+    };
+    const bx = PAD_X + i * (boxW + gap);
+    out += renderSBox(box, bx, y, boxW, boxH);
+  }
+  return { svg: out, height: boxH + 20 };
+}
+
+// ── Render a single body component ──
+function renderComponent(c: SlideComponent, y: number): { svg: string; height: number } {
+  switch (c.type) {
+    case "sbox": {
+      const svg = renderSBox(c.box, PAD_X, y, BODY_W, 220);
+      return { svg, height: 240 };
+    }
+    case "grid2":
+    case "grid3":
+      return renderGrid(c, y);
+    case "quote":
+      return renderQuote(c, y);
+    case "formula":
+      return renderFormula(c, y);
+    case "icard":
+      return renderICard(c, y);
+    case "bullets":
+      return renderBullets(c, y);
+    case "table":
+      return renderTable(c, y);
+    case "segments":
+      return renderSegments(c, y);
+    default:
+      return { svg: "", height: 0 };
+  }
+}
+
+// ── Main: build rich slide SVG ──
+
+export function buildRichSlideSvg(
+  slide: Slide,
+  slideIndex: number,
+  totalSlides: number,
+  accentColor: string,
+  courseName: string
+): string {
+  const tagColor = COLORS[slide.tagColor || "p"];
+
+  // ── Title area ──
+  const tagText = slide.tag ? slide.tag.toUpperCase() : "";
+  const titleLines = wrapText(slide.title, 46);
+  const maxTitleLines = Math.min(titleLines.length, 2);
+
+  // Accent top bar
+  let header = `<rect x="0" y="0" width="${W}" height="6" fill="${accentColor}"/>\n`;
+
+  // Eyebrow tag
+  if (tagText) {
+    header += `<text x="${PAD_X}" y="70" fill="${tagColor.fg}" font-size="22" font-weight="bold" font-family="monospace" letter-spacing="3">${esc(tagText)}</text>\n`;
+  }
+
+  // Title
+  let titleY = 130;
+  for (let i = 0; i < maxTitleLines; i++) {
+    header += `<text x="${PAD_X}" y="${titleY}" fill="${TEXT}" font-size="56" font-weight="bold" font-family="serif">${esc(stripBold(titleLines[i]))}</text>\n`;
+    titleY += 70;
+  }
+
+  // Divider
+  const dividerY = titleY - 50;
+  header += `<line x1="${PAD_X}" y1="${dividerY + 20}" x2="${W - PAD_X}" y2="${dividerY + 20}" stroke="${accentColor}" stroke-opacity="0.3" stroke-width="2"/>\n`;
+
+  // ── Body components ──
+  let body = "";
+  let cursorY = BODY_START_Y;
+
+  for (const comp of slide.body || []) {
+    if (cursorY >= BODY_END_Y - 60) break; // stop if we run out of room
+    const { svg, height } = renderComponent(comp, cursorY);
+    body += svg;
+    cursorY += height;
+  }
+
+  // ── Footer ──
+  const footer =
+    `<text x="${PAD_X}" y="1040" fill="${MUTED}" font-size="22" font-family="sans-serif">${esc(courseName)}</text>\n` +
+    `<text x="${W - PAD_X}" y="1040" text-anchor="end" fill="${MUTED}" font-size="22" font-family="sans-serif">${slideIndex + 1} / ${totalSlides}</text>\n`;
+
+  // Progress bar
+  const progressW = totalSlides > 1 ? ((slideIndex + 1) / totalSlides) * W : W;
+  const progress =
+    `<rect x="0" y="${H - 5}" width="${progressW}" height="5" fill="${accentColor}" fill-opacity="0.7"/>\n` +
+    `<rect x="${progressW}" y="${H - 5}" width="${W - progressW}" height="5" fill="#1A1D24"/>\n`;
+
+  return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+  <rect width="${W}" height="${H}" fill="${BG}"/>
+  ${header}
+  ${body}
+  ${footer}
+  ${progress}
+</svg>`;
+}

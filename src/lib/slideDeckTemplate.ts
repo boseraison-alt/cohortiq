@@ -56,6 +56,8 @@ export interface Slide {
   tagColor?: SlideColor;
   title: string;
   body: SlideComponent[];
+  /** Optional 120–200 word spoken narration for TTS when rendering as video */
+  narration?: string;
 }
 
 export interface SlideDeckInput {

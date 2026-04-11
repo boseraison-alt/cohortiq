@@ -560,10 +560,11 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
   const [deckError, setDeckError] = useState("");
   const [deckNumSlides, setDeckNumSlides] = useState(25);
 
-  // ── External "rich video" generation (X-Pilot / HeyGen) ──
+  // ── Rich narrated video (internal: rich SVG slides + onyx TTS + FFmpeg) ──
   const [richBusy, setRichBusy] = useState(false);
   const [richError, setRichError] = useState("");
-  const [richTool, setRichTool] = useState<"auto" | "xpilot" | "heygen">("auto");
+  const [richNumSlides, setRichNumSlides] = useState(12);
+  const [richStatus, setRichStatus] = useState("");
 
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -687,20 +688,21 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
     window.open(`/api/slidedeck/${videoId}`, "_blank", "noopener,noreferrer");
   };
 
-  // Generate a rich animated video via X-Pilot / HeyGen (external API)
+  // Generate a rich narrated video using internal pipeline:
+  //   Claude → rich SVG slides → resvg-js PNG → OpenAI "onyx" TTS → FFmpeg MP4
   const generateRichVideo = async () => {
     if (!topic.trim() || richBusy) return;
     setRichBusy(true);
     setRichError("");
+    setRichStatus("Writing rich slides with Claude...");
     try {
-      const res = await fetch("/api/ai/video-rich", {
+      const res = await fetch("/api/ai/rich-video", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           courseId,
           topic: topic.trim(),
-          forceTool: richTool === "auto" ? undefined : richTool,
-          useLLMRouter: richTool === "auto",
+          numSlides: richNumSlides,
           lang,
         }),
       });
@@ -725,6 +727,7 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
       setRichError(e.message || "Failed to generate rich video");
     }
     setRichBusy(false);
+    setRichStatus("");
   };
 
   const generate = async () => {
@@ -1009,40 +1012,32 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
                   )}
                 </div>
 
-                {/* ── Rich animated video (X-Pilot / HeyGen) ── */}
+                {/* ── Rich narrated video (internal pipeline: rich SVG + onyx TTS + FFmpeg) ── */}
                 <div className="mt-5 pt-5 border-t" style={{ borderColor: "var(--color-border)" }}>
                   <div className="flex items-center gap-3 mb-3">
                     <span className="text-2xl">🎞</span>
                     <div className="flex-1">
                       <p className="font-serif text-base font-bold" style={{ color: "var(--color-text)" }}>
-                        Generate Rich Animated Video
+                        Generate Rich Narrated Video
                       </p>
                       <p className="text-[13px] text-muted mt-0.5">
-                        Uses external APIs (X-Pilot for formulas/data, HeyGen for instructor-led). Takes 5–10 min. Requires API keys in Railway.
+                        Same color-coded grids, quotes, formulas, and tables as the HTML deck — rendered as an MP4 with OpenAI "onyx" narration. Takes 3–6 min. No extra API keys needed.
                       </p>
                     </div>
                   </div>
                   <div className="flex gap-3 flex-wrap items-end">
                     <div>
-                      <label className="text-[12px] text-muted uppercase tracking-wider block mb-1.5">Tool</label>
+                      <label className="text-[12px] text-muted uppercase tracking-wider block mb-1.5">Slides</label>
                       <div className="flex gap-1 flex-wrap">
-                        {[
-                          { key: "auto", label: "Auto-route" },
-                          { key: "xpilot", label: "X-Pilot" },
-                          { key: "heygen", label: "HeyGen" },
-                        ].map((opt) => (
-                          <button
-                            key={opt.key}
-                            onClick={() => setRichTool(opt.key as any)}
-                            disabled={richBusy}
+                        {[8, 10, 12, 15, 18].map((n) => (
+                          <button key={n} onClick={() => setRichNumSlides(n)} disabled={richBusy}
                             className="px-3 py-2 rounded-lg text-xs font-medium transition-all"
                             style={{
-                              background: richTool === opt.key ? color : "var(--color-bg-raised)",
-                              color: richTool === opt.key ? "#fff" : "var(--color-muted)",
-                              border: `1px solid ${richTool === opt.key ? color : "var(--color-border)"}`,
-                            }}
-                          >
-                            {opt.label}
+                              background: richNumSlides === n ? color : "var(--color-bg-raised)",
+                              color: richNumSlides === n ? "#fff" : "var(--color-muted)",
+                              border: `1px solid ${richNumSlides === n ? color : "var(--color-border)"}`,
+                            }}>
+                            {n}
                           </button>
                         ))}
                       </div>
@@ -1063,13 +1058,16 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
                             className="inline-block w-3 h-3 rounded-full border-2 border-t-transparent animate-spin"
                             style={{ borderColor: `${color} transparent transparent transparent` }}
                           />
-                          Rendering video…
+                          Rendering…
                         </>
                       ) : (
                         <>🎞 Generate Rich Video</>
                       )}
                     </button>
                   </div>
+                  {richStatus && !richError && (
+                    <p className="text-[12px] text-muted mt-2 italic">{richStatus}</p>
+                  )}
                   {richError && (
                     <div className="mt-3 bg-[#EF5350]/10 border border-[#EF5350]/30 rounded-xl px-4 py-2.5">
                       <p className="text-xs text-[#EF5350] font-semibold">Error: {richError}</p>
