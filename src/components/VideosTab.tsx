@@ -53,6 +53,7 @@ function getYtThumb(url: string): string | null {
 }
 
 function getVideoType(url: string, sourceType: string) {
+  if (sourceType === "slidedeck") return "slidedeck";
   if (/youtube\.com|youtu\.be/.test(url)) return "youtube";
   if (/vimeo\.com/.test(url)) return "vimeo";
   if (sourceType === "tutorial") return "tutorial";
@@ -167,10 +168,11 @@ function VideoCard({
     narration: t("vid.type.narration", lang),
     file: t("vid.type.file", lang),
     external: t("vid.type.external", lang),
+    slidedeck: "SLIDE DECK",
   };
 
   const typeEmoji: Record<string, string> = {
-    youtube: "▶️", vimeo: "🎥", tutorial: "🎓", presentation: "🖥️", narration: "🎤", file: "📹", external: "🎬",
+    youtube: "▶️", vimeo: "🎥", tutorial: "🎓", presentation: "🖥️", narration: "🎤", file: "📹", external: "🎬", slidedeck: "📘",
   };
 
   return (
@@ -549,6 +551,11 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
   const [slides, setSlides] = useState<SlideData[]>([]);
   const [genVideo, setGenVideo] = useState<Video | null>(null);
 
+  // ── Rich HTML slide deck generation ──
+  const [deckBusy, setDeckBusy] = useState(false);
+  const [deckError, setDeckError] = useState("");
+  const [deckNumSlides, setDeckNumSlides] = useState(25);
+
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const libraryRef = useRef<HTMLDivElement>(null);
@@ -624,6 +631,51 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
     if (activeVideo?.id === videoId) setActiveVideo(null);
     if (genVideo?.id === videoId) resetGen();
     loadVideos();
+  };
+
+  // Generate a rich HTML slide deck (not a video) — produces an interactive
+  // color-coded deck using Claude, saved as a sourceType="slidedeck" Video.
+  const generateSlideDeck = async () => {
+    if (!topic.trim() || deckBusy) return;
+    setDeckBusy(true);
+    setDeckError("");
+    try {
+      const res = await fetch("/api/ai/slidedeck", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId,
+          topic: topic.trim(),
+          numSlides: deckNumSlides,
+          lang,
+        }),
+      });
+      const text = await res.text();
+      let data: any;
+      try { data = JSON.parse(text); } catch {
+        throw new Error(
+          res.status === 503 ? "Server temporarily unavailable. Try again in a minute." :
+          res.status >= 500 ? `Server error (${res.status})` :
+          text.slice(0, 200)
+        );
+      }
+      if (!res.ok) throw new Error(data.error || "Slide deck generation failed");
+
+      // Open the HTML viewer in a new tab
+      window.open(data.viewUrl, "_blank", "noopener,noreferrer");
+
+      // Refresh library so the new deck appears
+      await loadVideos();
+      setTopic("");
+    } catch (e: any) {
+      setDeckError(e.message || "Failed to generate slide deck");
+    }
+    setDeckBusy(false);
+  };
+
+  // Open a slide deck in a new tab (used when clicking a slidedeck card)
+  const openSlideDeck = (videoId: string) => {
+    window.open(`/api/slidedeck/${videoId}`, "_blank", "noopener,noreferrer");
   };
 
   const generate = async () => {
@@ -850,6 +902,63 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
                     {T("vid.generate")}
                   </button>
                 </div>
+
+                {/* ── Rich HTML Slide Deck generator ── */}
+                <div className="mt-5 pt-5 border-t" style={{ borderColor: "var(--color-border)" }}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-2xl">📘</span>
+                    <div className="flex-1">
+                      <p className="font-serif text-base font-bold" style={{ color: "var(--color-text)" }}>
+                        Generate Rich Slide Deck
+                      </p>
+                      <p className="text-[13px] text-muted mt-0.5">
+                        Interactive HTML deck with color-coded sections, grids, formulas, and tables — reads the topic above.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 flex-wrap items-end">
+                    <div>
+                      <label className="text-[12px] text-muted uppercase tracking-wider block mb-1.5">Slides</label>
+                      <div className="flex gap-1 flex-wrap">
+                        {[15, 20, 25, 30, 35].map((n) => (
+                          <button key={n} onClick={() => setDeckNumSlides(n)} disabled={deckBusy}
+                            className="px-3 py-2 rounded-lg text-xs font-medium transition-all"
+                            style={{
+                              background: deckNumSlides === n ? color : "var(--color-bg-raised)",
+                              color: deckNumSlides === n ? "#fff" : "var(--color-muted)",
+                              border: `1px solid ${deckNumSlides === n ? color : "var(--color-border)"}`,
+                            }}>
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <button
+                      onClick={generateSlideDeck}
+                      disabled={!topic.trim() || deckBusy}
+                      className="rounded-xl px-5 py-2.5 text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-40 shrink-0 flex items-center gap-2"
+                      style={{
+                        background: deckBusy ? "var(--color-bg-raised)" : color,
+                        color: deckBusy ? "var(--color-muted)" : "#fff",
+                        border: deckBusy ? `1px solid var(--color-border)` : "none",
+                      }}>
+                      {deckBusy ? (
+                        <>
+                          <span className="inline-block w-3 h-3 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: `${color} transparent transparent transparent` }} />
+                          Writing deck…
+                        </>
+                      ) : (
+                        <>📘 Generate Deck</>
+                      )}
+                    </button>
+                  </div>
+                  {deckError && (
+                    <div className="mt-3 bg-[#EF5350]/10 border border-[#EF5350]/30 rounded-xl px-4 py-2.5">
+                      <p className="text-xs text-[#EF5350] font-semibold">Error: {deckError}</p>
+                      <button onClick={() => setDeckError("")} className="text-[12px] text-[#EF5350]/70 mt-1 hover:text-[#EF5350]">Dismiss</button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -969,7 +1078,13 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
                   <VideoCard
                     key={v.id} video={v} color={color}
                     isActive={activeVideo?.id === v.id}
-                    onClick={() => setActiveVideo(activeVideo?.id === v.id ? null : v)}
+                    onClick={() => {
+                      if (v.sourceType === "slidedeck") {
+                        openSlideDeck(v.id);
+                      } else {
+                        setActiveVideo(activeVideo?.id === v.id ? null : v);
+                      }
+                    }}
                     lang={lang}
                     courseId={courseId}
                     onDelete={!isExternal(v) ? () => deleteVideo(v.id) : undefined}
