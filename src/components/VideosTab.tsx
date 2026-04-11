@@ -54,6 +54,8 @@ function getYtThumb(url: string): string | null {
 
 function getVideoType(url: string, sourceType: string) {
   if (sourceType === "slidedeck") return "slidedeck";
+  if (sourceType === "xpilot") return "xpilot";
+  if (sourceType === "heygen") return "heygen";
   if (/youtube\.com|youtu\.be/.test(url)) return "youtube";
   if (/vimeo\.com/.test(url)) return "vimeo";
   if (sourceType === "tutorial") return "tutorial";
@@ -169,10 +171,12 @@ function VideoCard({
     file: t("vid.type.file", lang),
     external: t("vid.type.external", lang),
     slidedeck: "SLIDE DECK",
+    xpilot: "X-PILOT",
+    heygen: "HEYGEN",
   };
 
   const typeEmoji: Record<string, string> = {
-    youtube: "▶️", vimeo: "🎥", tutorial: "🎓", presentation: "🖥️", narration: "🎤", file: "📹", external: "🎬", slidedeck: "📘",
+    youtube: "▶️", vimeo: "🎥", tutorial: "🎓", presentation: "🖥️", narration: "🎤", file: "📹", external: "🎬", slidedeck: "📘", xpilot: "🎞", heygen: "👤",
   };
 
   return (
@@ -556,6 +560,11 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
   const [deckError, setDeckError] = useState("");
   const [deckNumSlides, setDeckNumSlides] = useState(25);
 
+  // ── External "rich video" generation (X-Pilot / HeyGen) ──
+  const [richBusy, setRichBusy] = useState(false);
+  const [richError, setRichError] = useState("");
+  const [richTool, setRichTool] = useState<"auto" | "xpilot" | "heygen">("auto");
+
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const libraryRef = useRef<HTMLDivElement>(null);
@@ -676,6 +685,46 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
   // Open a slide deck in a new tab (used when clicking a slidedeck card)
   const openSlideDeck = (videoId: string) => {
     window.open(`/api/slidedeck/${videoId}`, "_blank", "noopener,noreferrer");
+  };
+
+  // Generate a rich animated video via X-Pilot / HeyGen (external API)
+  const generateRichVideo = async () => {
+    if (!topic.trim() || richBusy) return;
+    setRichBusy(true);
+    setRichError("");
+    try {
+      const res = await fetch("/api/ai/video-rich", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId,
+          topic: topic.trim(),
+          forceTool: richTool === "auto" ? undefined : richTool,
+          useLLMRouter: richTool === "auto",
+          lang,
+        }),
+      });
+      const text = await res.text();
+      let data: any;
+      try { data = JSON.parse(text); } catch {
+        throw new Error(
+          res.status === 503 ? "Server temporarily unavailable. Try again in a minute." :
+          res.status >= 500 ? `Server error (${res.status})` :
+          text.slice(0, 200)
+        );
+      }
+      if (!res.ok) throw new Error(data.error || "Rich video generation failed");
+
+      // Refresh library and focus the new video
+      await loadVideos();
+      if (data.video) {
+        setActiveVideo(data.video);
+        setTopic("");
+      }
+    } catch (e: any) {
+      setRichError(e.message || "Failed to generate rich video");
+    }
+    setRichBusy(false);
   };
 
   const generate = async () => {
@@ -956,6 +1005,75 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
                     <div className="mt-3 bg-[#EF5350]/10 border border-[#EF5350]/30 rounded-xl px-4 py-2.5">
                       <p className="text-xs text-[#EF5350] font-semibold">Error: {deckError}</p>
                       <button onClick={() => setDeckError("")} className="text-[12px] text-[#EF5350]/70 mt-1 hover:text-[#EF5350]">Dismiss</button>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Rich animated video (X-Pilot / HeyGen) ── */}
+                <div className="mt-5 pt-5 border-t" style={{ borderColor: "var(--color-border)" }}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-2xl">🎞</span>
+                    <div className="flex-1">
+                      <p className="font-serif text-base font-bold" style={{ color: "var(--color-text)" }}>
+                        Generate Rich Animated Video
+                      </p>
+                      <p className="text-[13px] text-muted mt-0.5">
+                        Uses external APIs (X-Pilot for formulas/data, HeyGen for instructor-led). Takes 5–10 min. Requires API keys in Railway.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 flex-wrap items-end">
+                    <div>
+                      <label className="text-[12px] text-muted uppercase tracking-wider block mb-1.5">Tool</label>
+                      <div className="flex gap-1 flex-wrap">
+                        {[
+                          { key: "auto", label: "Auto-route" },
+                          { key: "xpilot", label: "X-Pilot" },
+                          { key: "heygen", label: "HeyGen" },
+                        ].map((opt) => (
+                          <button
+                            key={opt.key}
+                            onClick={() => setRichTool(opt.key as any)}
+                            disabled={richBusy}
+                            className="px-3 py-2 rounded-lg text-xs font-medium transition-all"
+                            style={{
+                              background: richTool === opt.key ? color : "var(--color-bg-raised)",
+                              color: richTool === opt.key ? "#fff" : "var(--color-muted)",
+                              border: `1px solid ${richTool === opt.key ? color : "var(--color-border)"}`,
+                            }}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <button
+                      onClick={generateRichVideo}
+                      disabled={!topic.trim() || richBusy}
+                      className="rounded-xl px-5 py-2.5 text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-40 shrink-0 flex items-center gap-2"
+                      style={{
+                        background: richBusy ? "var(--color-bg-raised)" : color,
+                        color: richBusy ? "var(--color-muted)" : "#fff",
+                        border: richBusy ? `1px solid var(--color-border)` : "none",
+                      }}
+                    >
+                      {richBusy ? (
+                        <>
+                          <span
+                            className="inline-block w-3 h-3 rounded-full border-2 border-t-transparent animate-spin"
+                            style={{ borderColor: `${color} transparent transparent transparent` }}
+                          />
+                          Rendering video…
+                        </>
+                      ) : (
+                        <>🎞 Generate Rich Video</>
+                      )}
+                    </button>
+                  </div>
+                  {richError && (
+                    <div className="mt-3 bg-[#EF5350]/10 border border-[#EF5350]/30 rounded-xl px-4 py-2.5">
+                      <p className="text-xs text-[#EF5350] font-semibold">Error: {richError}</p>
+                      <button onClick={() => setRichError("")} className="text-[12px] text-[#EF5350]/70 mt-1 hover:text-[#EF5350]">Dismiss</button>
                     </div>
                   )}
                 </div>
