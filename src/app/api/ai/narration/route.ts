@@ -120,7 +120,23 @@ ${context || "No materials loaded — use general knowledge of the topic."}${lan
 
     return NextResponse.json({ slides, topic: topic.trim(), duration, courseId, courseName });
   } catch (e: any) {
-    console.error("[narration/script]", e.message);
-    return NextResponse.json({ error: e.message || "Slide generation failed" }, { status: 500 });
+    // Log rich error info so Railway logs show what actually went wrong
+    console.error("[narration/script] ERROR:", {
+      message: e?.message,
+      name: e?.name,
+      status: e?.status,
+      type: e?.error?.type,
+      anthropicError: e?.error?.error?.message,
+      stack: e?.stack?.split("\n").slice(0, 3),
+    });
+
+    // Surface the most useful message we can find
+    const detail =
+      e?.error?.error?.message ||  // Anthropic SDK structured error
+      e?.message ||
+      e?.toString?.() ||
+      "Slide generation failed";
+
+    return NextResponse.json({ error: `Slide generation failed: ${detail}` }, { status: 500 });
   }
 }

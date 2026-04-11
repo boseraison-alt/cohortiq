@@ -35,7 +35,7 @@ export async function askClaude(
   maxTokens = 4096
 ): Promise<string> {
   const response = await getClient().messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-5",
     max_tokens: maxTokens,
     system,
     messages: [{ role: "user", content: userMessage }],
@@ -68,7 +68,7 @@ export async function askClaudeChat(
   maxTokens = 4096
 ): Promise<string> {
   const response = await getClient().messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-5",
     max_tokens: maxTokens,
     system,
     messages: messages as any,
