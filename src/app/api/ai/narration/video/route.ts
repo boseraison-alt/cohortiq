@@ -61,7 +61,9 @@ export async function POST(req: NextRequest) {
     const fileName = `presentation_${safeTopic}_${Date.now()}.mp4`;
     const outputPath = path.join(uploadDir, fileName);
 
-    const { fileSize, slideDurations } = await compositeVideo(slideMedia, outputPath);
+    const { fileSize, slideDurations } = await compositeVideo(slideMedia, outputPath, {
+      cinematic: false,
+    });
 
     // Enrich slides with per-slide audio durations for annotation timeline
     const enrichedSlides = slides.map((s: SlideData, i: number) => ({

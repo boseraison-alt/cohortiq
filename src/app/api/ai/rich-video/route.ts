@@ -344,7 +344,9 @@ ${context || "No materials loaded — use general knowledge of the topic."}${lan
     const fileName = `rich_${safeTopic}_${Date.now()}.mp4`;
     const outputPath = path.join(uploadDir, fileName);
 
-    const { fileSize, slideDurations } = await compositeVideo(slideMedia, outputPath);
+    const { fileSize, slideDurations } = await compositeVideo(slideMedia, outputPath, {
+      cinematic: true,
+    });
 
     // Build enriched slide data — include both rich components and legacy fields
     // so the existing AnnotatedVideoPlayer can still render the right-side panel.

@@ -35,23 +35,30 @@ export interface SlideMedia {
  * Back-to-back segments play as smooth cross-dissolves thanks to the
  * overlapping fades (0.4s in + 0.5s out).
  *
- * Settings:
- *   - libx264 stillimage tune (optimized for slide content)
- *   - 30fps output
- *   - +faststart for instant web playback
+ * When `cinematic: true` (default):
+ *   - Subtle corner vignette (darker edges for depth)
+ *   - Punchier colors (+8% contrast, +12% saturation)
+ *   - Slight gamma curve for a filmic mood
+ *   - Longer opening fade for a dramatic reveal
+ *
+ * When `cinematic: false`:
+ *   - Plain fade in/out only (matches the original video look)
+ *
+ * All filters used are from the FFmpeg core set and work reliably
+ * across versions — no zoompan or other fragile filters.
  */
 export async function compositeVideo(
   slides: SlideMedia[],
   outputPath: string,
-  // `animate` is accepted but currently a no-op — kept for forward compat.
-  // When a reliable zoompan pattern is ready we'll wire it back in here.
-  _options?: { animate?: boolean }
+  options?: { cinematic?: boolean; animate?: boolean }
 ): Promise<{ fileSize: number; slideDurations: number[] }> {
+  const cinematic = options?.cinematic !== false; // default on
   const tmpDir = path.join(os.tmpdir(), `studyai-video-${Date.now()}`);
   await mkdir(tmpDir, { recursive: true });
 
   const FADE_IN = 0.4;
   const FADE_OUT = 0.5;
+  const DRAMATIC_INTRO = 1.0; // longer fade on the first slide when cinematic
 
   try {
     const segmentPaths: string[] = [];
@@ -85,12 +92,29 @@ export async function compositeVideo(
       slideDurations.push(audioDuration);
       const fadeOutStart = Math.max(0, audioDuration - FADE_OUT);
 
+      // ── Build the per-slide filter chain ──
+      const isFirstSlide = i === 0;
+      const isLastSlide = i === slides.length - 1;
+      const openFade = isFirstSlide && cinematic ? DRAMATIC_INTRO : FADE_IN;
+      const closeFade = isLastSlide && cinematic ? DRAMATIC_INTRO : FADE_OUT;
+      const closeFadeStart = Math.max(0, audioDuration - closeFade);
+
+      const filters: string[] = ["scale=1920:1080"];
+      if (cinematic) {
+        // Subtle vignette: darker corners, lighter center.
+        // angle = PI/5 → ~36° cone; keeps the look subtle.
+        filters.push("vignette=angle=PI/5");
+        // Color grade: slight contrast + saturation boost + gentle gamma.
+        filters.push("eq=contrast=1.08:saturation=1.12:gamma=0.98");
+      }
+      filters.push(`fade=t=in:st=0:d=${openFade}`);
+      filters.push(`fade=t=out:st=${closeFadeStart.toFixed(2)}:d=${closeFade}`);
+
       await runFfmpeg([
         "-loop", "1",
         "-i", pngPath,
         "-i", mp3Path,
-        "-vf",
-        `scale=1920:1080,fade=t=in:st=0:d=${FADE_IN},fade=t=out:st=${fadeOutStart.toFixed(2)}:d=${FADE_OUT}`,
+        "-vf", filters.join(","),
         "-c:v", "libx264",
         "-tune", "stillimage",
         "-c:a", "aac",
