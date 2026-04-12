@@ -30,33 +30,71 @@ function getClient(): Anthropic {
 }
 
 const MODEL = "claude-sonnet-4-5-20250929";
+const MAX_RETRIES = 3;
+const RETRY_DELAYS = [5000, 15000, 30000]; // 5s, 15s, 30s
 
-// Anthropic SDK refuses non-streaming requests whose max_tokens implies
-// the response could take longer than 10 minutes. Streaming is required
-// for large outputs, so we always stream and collect the result.
+// Retry-able error types from Anthropic (transient, worth retrying)
+function isRetryable(err: any): boolean {
+  const msg = (err?.message || err?.error?.message || "").toLowerCase();
+  const type = err?.error?.type || err?.error?.error?.type || "";
+  return (
+    type === "overloaded_error" ||
+    type === "rate_limit_error" ||
+    msg.includes("overloaded") ||
+    msg.includes("rate limit") ||
+    msg.includes("529") ||
+    msg.includes("503") ||
+    msg.includes("too many requests")
+  );
+}
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+// Streaming Claude call with automatic retry on transient errors
+// (overloaded, rate-limited). Retries up to 3 times with exponential backoff.
 export async function askClaude(
   system: string,
   userMessage: string,
   maxTokens = 4096
 ): Promise<string> {
-  const stream = await getClient().messages.create({
-    model: MODEL,
-    max_tokens: maxTokens,
-    system,
-    messages: [{ role: "user", content: userMessage }],
-    stream: true,
-  });
+  let lastErr: any;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const stream = await getClient().messages.create({
+        model: MODEL,
+        max_tokens: maxTokens,
+        system,
+        messages: [{ role: "user", content: userMessage }],
+        stream: true,
+      });
 
-  let text = "";
-  for await (const event of stream) {
-    if (
-      event.type === "content_block_delta" &&
-      event.delta.type === "text_delta"
-    ) {
-      text += event.delta.text;
+      let text = "";
+      for await (const event of stream) {
+        if (
+          event.type === "content_block_delta" &&
+          event.delta.type === "text_delta"
+        ) {
+          text += event.delta.text;
+        }
+      }
+      return text;
+    } catch (err: any) {
+      lastErr = err;
+      if (attempt < MAX_RETRIES && isRetryable(err)) {
+        const delay = RETRY_DELAYS[attempt] || 30000;
+        console.warn(
+          `[claude] Retryable error (attempt ${attempt + 1}/${MAX_RETRIES}), waiting ${delay / 1000}s:`,
+          err?.error?.type || err?.message
+        );
+        await sleep(delay);
+        continue;
+      }
+      throw err;
     }
   }
-  return text;
+  throw lastErr;
 }
 
 type ImageContentBlock = {
@@ -74,29 +112,47 @@ export type ClaudeMessage = {
   content: string | Array<TextContentBlock | ImageContentBlock>;
 };
 
-// Multi-turn chat with conversation history (supports vision content blocks)
-// Uses streaming for compatibility with large max_tokens values.
+// Multi-turn chat with conversation history (supports vision content blocks).
+// Uses streaming + retry on transient errors.
 export async function askClaudeChat(
   system: string,
   messages: ClaudeMessage[],
   maxTokens = 4096
 ): Promise<string> {
-  const stream = await getClient().messages.create({
-    model: MODEL,
-    max_tokens: maxTokens,
-    system,
-    messages: messages as any,
-    stream: true,
-  });
+  let lastErr: any;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const stream = await getClient().messages.create({
+        model: MODEL,
+        max_tokens: maxTokens,
+        system,
+        messages: messages as any,
+        stream: true,
+      });
 
-  let text = "";
-  for await (const event of stream) {
-    if (
-      event.type === "content_block_delta" &&
-      event.delta.type === "text_delta"
-    ) {
-      text += event.delta.text;
+      let text = "";
+      for await (const event of stream) {
+        if (
+          event.type === "content_block_delta" &&
+          event.delta.type === "text_delta"
+        ) {
+          text += event.delta.text;
+        }
+      }
+      return text;
+    } catch (err: any) {
+      lastErr = err;
+      if (attempt < MAX_RETRIES && isRetryable(err)) {
+        const delay = RETRY_DELAYS[attempt] || 30000;
+        console.warn(
+          `[claude-chat] Retryable error (attempt ${attempt + 1}/${MAX_RETRIES}), waiting ${delay / 1000}s:`,
+          err?.error?.type || err?.message
+        );
+        await sleep(delay);
+        continue;
+      }
+      throw err;
     }
   }
-  return text;
+  throw lastErr;
 }
