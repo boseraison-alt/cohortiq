@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const slideCount = Math.min(15, Math.max(5, Number(numSlides) || 8));
+    const slideCount = Math.min(30, Math.max(5, Number(numSlides) || 8));
 
     // ── Course info + context chunks ──
     const course = await prisma.course.findUnique({
@@ -317,10 +317,10 @@ OTHER RULES
 COURSE MATERIALS:
 ${context || "No materials loaded — use general knowledge of the topic."}${langInstruction}`;
 
-    // 8192 is safely under Anthropic's 10-minute streaming threshold and
-    // plenty for ~8 short rich slides. Only bump this if we observe
-    // truncation on a specific slide count.
-    const maxClaudeTokens = slideCount <= 8 ? 8192 : 16000;
+    // Scale max_tokens with slide count so larger decks don't truncate.
+    // Budget ~1500 tokens per slide (narration + body components) + 2K overhead.
+    // Capped at 32K for safety (streaming handles long generations fine).
+    const maxClaudeTokens = Math.min(32000, Math.max(8192, slideCount * 1500 + 2000));
     console.log(`[rich-video] Calling Claude (max_tokens=${maxClaudeTokens})`);
     const claudeStart = Date.now();
     const raw = await askClaude(
