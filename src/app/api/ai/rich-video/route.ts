@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { courseId, topic, numSlides = 12, lang = "en" } = await req.json();
+    const { courseId, topic, numSlides = 8, lang = "en" } = await req.json();
     if (!courseId || !topic?.trim()) {
       return NextResponse.json(
         { error: "courseId and topic are required" },
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const slideCount = Math.min(20, Math.max(5, Number(numSlides) || 12));
+    const slideCount = Math.min(15, Math.max(5, Number(numSlides) || 8));
 
     // ── Course info + context chunks ──
     const course = await prisma.course.findUnique({
@@ -111,7 +111,7 @@ EACH SLIDE:
   "tagColor": "p" | "t" | "c" | "a" | "g" | "b" | "r",
   "title": "Slide title, max 60 chars",
   "body": [ /* 2-3 visual components */ ],
-  "narration": "120-180 words of natural spoken narration for this slide — written for a single clear narrator voice. Walk through the concept conversationally. Do NOT read the bullet points verbatim. Explain, connect, and add insight."
+  "narration": "80-120 words of natural spoken narration — written for a single clear narrator voice. Walk through the concept conversationally. Do NOT read the bullet points verbatim. Explain and connect ideas concisely."
 }
 
 Colors: p=purple | t=teal | c=coral | a=amber | g=green | b=blue | r=red
@@ -320,78 +320,88 @@ ${context || "No materials loaded — use general knowledge of the topic."}${lan
       deckTitle: parsed.deckTitle,
     });
 
-    // ── Render each slide: SVG → PNG + TTS audio ──
+    // ── Render all slides in PARALLEL (PNG + TTS) ──
+    //
+    // The old serial loop was the dominant bottleneck — 12 slides × ~5s
+    // TTS each was burning 60+ seconds alone. Running them all at once
+    // (Promise.all) cuts the slide stage down to roughly the time of a
+    // single slide, at the cost of a brief burst of OpenAI TTS requests
+    // (well within typical rate limits for 12–18 slides).
     const totalSlides = parsed.slides.length;
-    const slideMedia: { png: Buffer; mp3: Buffer }[] = [];
+    console.log(`[rich-video] Rendering ${totalSlides} slides in parallel`);
+    const renderStart = Date.now();
 
-    for (let i = 0; i < totalSlides; i++) {
-      const slide = parsed.slides[i];
-
-      // Step 1: Build SVG
-      let svg: string;
-      try {
-        svg = buildRichSlideSvg(slide, i, totalSlides, accentColor, courseName);
-      } catch (stepErr: any) {
-        throw new Error(
-          `Slide ${i + 1}/${totalSlides} SVG build failed: ${stepErr?.message || stepErr}. Slide title: "${slide?.title || "unknown"}"`
-        );
-      }
-
-      // Step 2: Render SVG → PNG
-      let png: Buffer;
-      try {
-        png = await renderSlideToPng(svg);
-      } catch (stepErr: any) {
-        throw new Error(
-          `Slide ${i + 1}/${totalSlides} PNG render failed: ${stepErr?.message || stepErr}`
-        );
-      }
-
-      // Step 3: Build narration text (fall back to slide content if no narration)
-      const narrationText =
-        slide.narration ||
-        `${slide.title}. ${(slide.body || [])
-          .map((c: any) =>
-            c.type === "bullets"
-              ? c.items?.map((it: any) => it.text).join(". ")
-              : c.type === "quote"
-              ? c.text
-              : c.type === "sbox"
-              ? `${c.box?.title}. ${c.box?.body}`
-              : c.type === "formula"
-              ? c.text
-              : c.type === "icard"
-              ? `${c.title}. ${c.body}`
-              : ""
-          )
-          .filter(Boolean)
-          .join(". ")}`;
-
-      if (!narrationText.trim()) {
-        throw new Error(
-          `Slide ${i + 1}/${totalSlides} has empty narration (and empty body components to fall back to).`
-        );
-      }
-
-      // Step 4: TTS
-      let mp3: Buffer;
-      try {
-        const textChunks = splitIntoChunks(narrationText, 4000);
-        const audioBuffers: Buffer[] = [];
-        for (const chunk of textChunks) {
-          const buf = await generateSpeech(chunk, "onyx");
-          audioBuffers.push(buf);
+    const slideMedia = await Promise.all(
+      parsed.slides.map(async (slide: Slide, i: number) => {
+        // Step 1: Build SVG
+        let svg: string;
+        try {
+          svg = buildRichSlideSvg(slide, i, totalSlides, accentColor, courseName);
+        } catch (stepErr: any) {
+          throw new Error(
+            `Slide ${i + 1}/${totalSlides} SVG build failed: ${stepErr?.message || stepErr}. Slide title: "${slide?.title || "unknown"}"`
+          );
         }
-        mp3 = Buffer.concat(audioBuffers);
-      } catch (stepErr: any) {
-        throw new Error(
-          `Slide ${i + 1}/${totalSlides} TTS failed: ${stepErr?.message || stepErr}`
-        );
-      }
 
-      slideMedia.push({ png, mp3 });
-      console.log(`[rich-video] Rendered slide ${i + 1}/${totalSlides}`);
-    }
+        // Step 2: Render SVG → PNG
+        let png: Buffer;
+        try {
+          png = await renderSlideToPng(svg);
+        } catch (stepErr: any) {
+          throw new Error(
+            `Slide ${i + 1}/${totalSlides} PNG render failed: ${stepErr?.message || stepErr}`
+          );
+        }
+
+        // Step 3: Build narration text (fall back to body components if empty)
+        const narrationText =
+          slide.narration ||
+          `${slide.title}. ${(slide.body || [])
+            .map((c: any) =>
+              c.type === "bullets"
+                ? c.items?.map((it: any) => it.text).join(". ")
+                : c.type === "quote"
+                ? c.text
+                : c.type === "sbox"
+                ? `${c.box?.title}. ${c.box?.body}`
+                : c.type === "formula"
+                ? c.text
+                : c.type === "icard"
+                ? `${c.title}. ${c.body}`
+                : ""
+            )
+            .filter(Boolean)
+            .join(". ")}`;
+
+        if (!narrationText.trim()) {
+          throw new Error(
+            `Slide ${i + 1}/${totalSlides} has empty narration (and empty body components to fall back to).`
+          );
+        }
+
+        // Step 4: TTS
+        let mp3: Buffer;
+        try {
+          const textChunks = splitIntoChunks(narrationText, 4000);
+          const audioBuffers: Buffer[] = [];
+          for (const chunk of textChunks) {
+            const buf = await generateSpeech(chunk, "onyx");
+            audioBuffers.push(buf);
+          }
+          mp3 = Buffer.concat(audioBuffers);
+        } catch (stepErr: any) {
+          throw new Error(
+            `Slide ${i + 1}/${totalSlides} TTS failed: ${stepErr?.message || stepErr}`
+          );
+        }
+
+        return { png, mp3 };
+      })
+    );
+
+    console.log(
+      `[rich-video] All ${totalSlides} slides rendered in ${Math.round((Date.now() - renderStart) / 1000)}s`
+    );
 
     // ── Composite into MP4 ──
     const uploadDir = getUploadDir("videos");

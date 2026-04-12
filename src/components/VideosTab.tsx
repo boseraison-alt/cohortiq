@@ -563,7 +563,7 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
   // ── Rich narrated video (internal: rich SVG slides + onyx TTS + FFmpeg) ──
   const [richBusy, setRichBusy] = useState(false);
   const [richError, setRichError] = useState("");
-  const [richNumSlides, setRichNumSlides] = useState(12);
+  const [richNumSlides, setRichNumSlides] = useState(8);
   const [richStatus, setRichStatus] = useState("");
 
   const abortRef = useRef<AbortController | null>(null);
@@ -1057,7 +1057,7 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
                     <div>
                       <label className="text-[12px] text-muted uppercase tracking-wider block mb-1.5">Slides</label>
                       <div className="flex gap-1 flex-wrap">
-                        {[8, 10, 12, 15, 18].map((n) => (
+                        {[5, 8, 10, 12, 15].map((n) => (
                           <button key={n} onClick={() => setRichNumSlides(n)} disabled={richBusy}
                             className="px-3 py-2 rounded-lg text-xs font-medium transition-all"
                             style={{
