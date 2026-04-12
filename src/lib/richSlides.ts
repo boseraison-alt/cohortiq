@@ -28,22 +28,22 @@ import type {
 const W = 1920;
 const H = 1080;
 
-// VIBRANT colors — bright and saturated for a punchy cinematic look on dark bg
+// REFINED colors — colorful but not neon. Readable on dark backgrounds.
 const COLORS: Record<SlideColor, { fg: string; bg: string; border: string }> = {
-  p: { fg: "#D4CFFF", bg: "#7B6EF6", border: "#B8B0FF" }, // vivid purple
-  t: { fg: "#6EEDC8", bg: "#22C993", border: "#6EEDC8" }, // vivid teal
-  c: { fg: "#FFAB91", bg: "#FF6E40", border: "#FFAB91" }, // vivid coral
-  a: { fg: "#FFD54F", bg: "#FFB300", border: "#FFD54F" }, // vivid amber/gold
-  b: { fg: "#90CAF9", bg: "#42A5F5", border: "#90CAF9" }, // vivid blue
-  g: { fg: "#A5D66F", bg: "#7CB342", border: "#A5D66F" }, // vivid green
-  r: { fg: "#FF8A80", bg: "#FF5252", border: "#FF8A80" }, // vivid red
+  p: { fg: "#C8C0F0", bg: "#6B60D0", border: "#A8A0E0" }, // soft purple
+  t: { fg: "#80D8B4", bg: "#1FA878", border: "#80D8B4" }, // soft teal
+  c: { fg: "#F0A890", bg: "#D86840", border: "#F0A890" }, // warm coral
+  a: { fg: "#F0C860", bg: "#C89020", border: "#F0C860" }, // warm amber
+  b: { fg: "#88BDE8", bg: "#3888CC", border: "#88BDE8" }, // calm blue
+  g: { fg: "#98CC70", bg: "#609020", border: "#98CC70" }, // natural green
+  r: { fg: "#E89090", bg: "#D04848", border: "#E89090" }, // muted red
 };
 
-const BG      = "#0A0C12";  // deep dark blue-black
-const CARD_BG = "#161A24";  // slightly lighter card
-const TEXT    = "#FFFFFF";   // pure white for maximum readability
-const MUTED   = "#A8A0B4";  // lighter, cooler grey (was brownish)
-const BORDER  = "#2D3244";  // cool-toned border
+const BG      = "#0C0E14";  // deep blue-black
+const CARD_BG = "#181C26";  // subtle card
+const TEXT    = "#F0ECE4";   // warm off-white (softer than pure #FFF)
+const MUTED   = "#908898";  // cool muted lavender
+const BORDER  = "#282E3C";  // cool border
 
 // ── XML escape ──
 function esc(s: string): string {
@@ -96,7 +96,7 @@ function renderSBox(box: SBoxItem, x: number, y: number, width: number, height: 
 
   let out = "";
   // Background fill (semi-transparent) + border
-  out += `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="14" fill="${color.bg}" fill-opacity="0.30" stroke="${color.bg}" stroke-opacity="0.80" stroke-width="2"/>\n`;
+  out += `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="14" fill="${color.bg}" fill-opacity="0.22" stroke="${color.bg}" stroke-opacity="0.65" stroke-width="2"/>\n`;
 
   // Title
   let cy = y + 42;

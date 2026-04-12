@@ -269,29 +269,44 @@ If the topic is conceptual (e.g. "Brand Identity", "Leadership Styles",
 "Collaboration"), you MUST find at least 2 numeric angles and visualize
 them. Examples:
 
+  Topic: "CVP Analysis" or "Break-Even Analysis"
+    → barchart of "Break-even volume across 3 scenarios (base/optimistic/pessimistic)"
+    → linechart showing "Revenue vs Total Cost as volume increases" (the classic CVP graph)
+    → metrics cards: "BEP = 1,000 units | CM = $6/unit | Fixed Costs = $48K"
+    → progress bars: "Margin of Safety: 35% | Operating Leverage: 2.8x"
+
+  Topic: "Cost Accounting" or "Variance Analysis"
+    → barchart comparing "Budget vs Actual by cost category"
+    → metrics cards: "Price Variance: -$2,400 | Volume Variance: +$3,600"
+
   Topic: "Brand Identity"
     → barchart of "Top 10 most valuable brands 2024"
     → metrics cards of "Apple's brand value: $516B, +9%"
-
-  Topic: "Leadership Styles"
-    → piechart of "Preferred leadership style by industry"
-    → barchart of "Employee engagement by management approach"
-
-  Topic: "Collaboration"
-    → linechart of "Tool adoption: Slack vs Teams 2018–2026"
-    → progress bars of "Cross-functional team performance metrics"
 
   Topic: "Market Segmentation"
     → piechart of "US beverage market share by segment"
     → barchart of "Segment growth rates 2023–2025"
 
+  Topic: "Revenue / Pricing"
+    → linechart of "Price elasticity: demand curve at different price points"
+    → barchart of "Revenue by pricing strategy (premium vs economy)"
+
 USE REAL OR PLAUSIBLE ILLUSTRATIVE DATA. It's better to have an
 approximate graph than none at all. Round numbers are fine. Prefer
 real numbers when the course materials provide them.
 
+GRAPH QUOTA:
+  - Minimum 2 graphs for conceptual topics
+  - Minimum 3 graphs for quantitative/accounting/finance topics
+    (CVP, break-even, variance, budgeting, pricing, revenue)
+  - For CVP/break-even specifically: you MUST include a linechart
+    showing cost-volume-profit relationships AND a barchart or
+    metrics card showing the break-even result with specific numbers
+
 Recommended placement:
-  - Slide 2 or 3: a big-picture graph (barchart, piechart) that sets
-    context for the topic
+  - Slide 2 or 3: a big-picture graph (barchart, linechart) that sets
+    context with real data
+  - Mid-deck: worked example with formula + supporting graph
   - Slide near the end: metrics cards summarizing key takeaways
 
 ═══════════════════════════════════════════════════════════════

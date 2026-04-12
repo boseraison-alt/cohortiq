@@ -107,7 +107,7 @@ export async function compositeVideo(
         //   - saturation 1.25 (+25%) → colors really pop
         //   - gamma 0.92             → richer midtones, filmic mood
         //   - brightness -0.04       → slightly darker overall, more depth
-        filters.push("eq=contrast=1.18:saturation=1.25:gamma=0.92:brightness=-0.04");
+        filters.push("eq=contrast=1.12:saturation=1.18:gamma=0.95:brightness=-0.02");
         // Vignette using a literal radian value (0.628 ≈ PI/5 ≈ 36°)
         // so it works on every ffmpeg-static build without expression
         // evaluation. Stronger x0/y0 for a more visible falloff.
