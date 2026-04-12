@@ -265,13 +265,50 @@ Example slide with 3 concrete examples:
 Notice: TWO icard examples, grid2 comparison, and narration that walks through specific numbers. This is the standard.
 
 ═══════════════════════════════════════════════════════════════
+HARD QUOTA — GRAPHS ARE MANDATORY (not optional)
+═══════════════════════════════════════════════════════════════
+
+The deck MUST include AT LEAST TWO graph components across all slides,
+chosen from: barchart, linechart, piechart, metrics, progress. This
+applies EVEN IF the topic seems non-quantitative.
+
+If the topic is conceptual (e.g. "Brand Identity", "Leadership Styles",
+"Collaboration"), you MUST find at least 2 numeric angles and visualize
+them. Examples:
+
+  Topic: "Brand Identity"
+    → barchart of "Top 10 most valuable brands 2024"
+    → metrics cards of "Apple's brand value: $516B, +9%"
+
+  Topic: "Leadership Styles"
+    → piechart of "Preferred leadership style by industry"
+    → barchart of "Employee engagement by management approach"
+
+  Topic: "Collaboration"
+    → linechart of "Tool adoption: Slack vs Teams 2018–2026"
+    → progress bars of "Cross-functional team performance metrics"
+
+  Topic: "Market Segmentation"
+    → piechart of "US beverage market share by segment"
+    → barchart of "Segment growth rates 2023–2025"
+
+USE REAL OR PLAUSIBLE ILLUSTRATIVE DATA. It's better to have an
+approximate graph than none at all. Round numbers are fine. Prefer
+real numbers when the course materials provide them.
+
+Recommended placement:
+  - Slide 2 or 3: a big-picture graph (barchart, piechart) that sets
+    context for the topic
+  - Slide near the end: metrics cards summarizing key takeaways
+
+═══════════════════════════════════════════════════════════════
 OTHER RULES
 ═══════════════════════════════════════════════════════════════
 1. Each slide must have 3-4 body components. At least 1 MUST be an example (icard/formula/sbox with named company or specific numbers).
-2. Narration is 120-180 words — natural, conversational, walks through each example.
+2. Narration is 80-120 words — natural, conversational, walks through each example.
 3. When discussing any calculation, include a formula component AND an icard "WORKED EXAMPLE" with real numbers.
 4. When comparing 2 things, use grid2 + 2 example icards. When comparing 3, use grid3 or segments + examples.
-5. When discussing numeric data, use a graph component (barchart/linechart/piechart/metrics/progress).
+5. When discussing numeric data, use a graph component (barchart/linechart/piechart/metrics/progress) — never dump numbers into bullets or sboxes.
 6. Ground content in the course materials below. If the materials lack specific examples, use accurate real-world examples from your knowledge of the topic.
 7. Use real company names, real years, real dollar amounts whenever possible.
 8. Keep component body text concise — ~12-15 words per box.

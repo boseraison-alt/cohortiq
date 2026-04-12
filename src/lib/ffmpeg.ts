@@ -101,11 +101,17 @@ export async function compositeVideo(
 
       const filters: string[] = ["scale=1920:1080"];
       if (cinematic) {
-        // Simple color grade: slight contrast + saturation boost + gentle gamma.
-        // Uses only the `eq` filter which is in the FFmpeg core set and works
-        // reliably across all ffmpeg-static builds. No vignette (the PI/5
-        // expression isn't supported by every filter expression evaluator).
-        filters.push("eq=contrast=1.08:saturation=1.12:gamma=0.98");
+        // STRONG cinematic grade (boosted from the previous subtle values
+        // which were basically invisible):
+        //   - contrast 1.18 (+18%)   → shadows deeper, highlights punchier
+        //   - saturation 1.25 (+25%) → colors really pop
+        //   - gamma 0.92             → richer midtones, filmic mood
+        //   - brightness -0.04       → slightly darker overall, more depth
+        filters.push("eq=contrast=1.18:saturation=1.25:gamma=0.92:brightness=-0.04");
+        // Vignette using a literal radian value (0.628 ≈ PI/5 ≈ 36°)
+        // so it works on every ffmpeg-static build without expression
+        // evaluation. Stronger x0/y0 for a more visible falloff.
+        filters.push("vignette=angle=0.628:x0=w/2:y0=h/2:mode=forward");
       }
       filters.push(`fade=t=in:st=0:d=${openFade}`);
       filters.push(`fade=t=out:st=${closeFadeStart.toFixed(2)}:d=${closeFade}`);
