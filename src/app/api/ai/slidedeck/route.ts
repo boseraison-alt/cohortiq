@@ -164,6 +164,83 @@ VISUAL COMPONENTS (USE A VARIETY — THIS IS CRITICAL)
 ]}
 
 ═══════════════════════════════════════════════════════════════
+GRAPH TYPE SELECTION (NEW — pick the right chart for the data)
+═══════════════════════════════════════════════════════════════
+
+The deck also supports 5 graph/data-viz components. Pick the right one:
+
+  Data pattern                          →  Correct graph type
+  ──────────────────────────────────────────────────────────────
+  Comparing discrete categories         →  barchart
+   (e.g. "Revenue by region", "Sales by product line")
+  Trends / change over time             →  linechart
+   (e.g. "Growth 2020–2026", "Monthly user signups")
+  Parts of a whole (sums to 100%)       →  piechart
+   (e.g. "Market share", "Budget allocation")
+  Headline KPIs / dashboard stats       →  metrics
+   (e.g. "Revenue $12M +23%", 2–4 big numbers)
+  Relative achievement or completion    →  progress
+   (e.g. "Awareness 85%", campaign attainment)
+
+Rules:
+  - Never use pie for data that doesn't sum to a whole.
+  - Never use line for discrete non-sequential categories.
+  - Never use bar for time-series trends — use line.
+  - Match visual metaphor to data shape.
+
+Graph examples (same JSON format used in rich-video):
+
+{"type":"barchart","title":"Q4 Revenue by Region","unit":"M","bars":[
+  {"label":"Americas","value":142,"color":"t"},
+  {"label":"Europe","value":98,"color":"p"},
+  {"label":"Asia","value":156,"color":"a"}
+]}
+
+{"type":"linechart","title":"User Growth","series":[
+  {"label":"Free","color":"b","points":[[2021,1.2],[2022,3.5],[2023,7.1],[2024,14.2]]},
+  {"label":"Paid","color":"t","points":[[2021,0.3],[2022,0.9],[2023,2.1],[2024,4.8]]}
+]}
+
+{"type":"piechart","title":"Market Share","slices":[
+  {"label":"Leader","value":48,"color":"p"},
+  {"label":"Challenger","value":27,"color":"t"},
+  {"label":"Others","value":25,"color":"b"}
+]}
+
+{"type":"metrics","items":[
+  {"label":"Revenue","value":"$12.5M","delta":"+23%","color":"g"},
+  {"label":"Customers","value":"45K","delta":"+18%","color":"t"},
+  {"label":"Churn","value":"2.1%","delta":"-0.4%","color":"p"}
+]}
+
+{"type":"progress","title":"Campaign Funnel","items":[
+  {"label":"Awareness","percent":85,"color":"t"},
+  {"label":"Consideration","percent":62,"color":"p"},
+  {"label":"Purchase","percent":41,"color":"a"}
+]}
+
+═══════════════════════════════════════════════════════════════
+EVERY SLIDE MUST TEACH WITH CONCRETE EXAMPLES
+═══════════════════════════════════════════════════════════════
+
+The single most important rule: abstract explanations are forbidden.
+Every slide must include AT LEAST ONE concrete example — real
+numbers, real companies, real scenarios, named historical cases,
+or worked calculations.
+
+Good examples (use these patterns):
+  ✓ "Apple cut iPhone prices 12% in 2013 — sold 47M units, up from 37M"
+  ✓ "Bakery with $10K fixed costs, $5 VC, $15 price → BEP = 1,000 cakes"
+  ✓ "Campbell's 2019: dropped 27% of SKUs, margins rose 4 points"
+
+NOT allowed:
+  ✗ "Companies should reduce costs to improve margins" (no example)
+  ✗ "Segmentation is important"                          (no example)
+
+Best components for examples: icard, formula, sbox.
+Use real company names, real years, real dollar amounts whenever possible.
+
+═══════════════════════════════════════════════════════════════
 HARD REQUIREMENTS (ENFORCED — THE DECK WILL BE REJECTED IF NOT MET)
 ═══════════════════════════════════════════════════════════════
 
@@ -176,13 +253,17 @@ HARD REQUIREMENTS (ENFORCED — THE DECK WILL BE REJECTED IF NOT MET)
    • At least ${minTable} slide must contain TABLE
    • No more than ${maxAllBullets} slides may use ONLY bullets as their body
 
-2. Every slide must have 2–4 components in its body. A single-component slide is rejected.
+2. EXAMPLE QUOTA: At least 60% of slides must contain an ICARD or named example. Abstract slides are rejected.
 
-3. Use tagColor to establish visual rhythm — alternate between colors across slides, don't use the same color for every tag.
+3. Every slide must have 2–4 components in its body. A single-component slide is rejected.
 
-4. Inside component bodies, use **bold** to emphasize key terms.
+4. Use tagColor to establish visual rhythm — alternate between colors across slides, don't use the same color for every tag.
 
-5. Ground all content in the course materials below. Use real examples, real numbers, real case studies from the materials when available.
+5. Inside component bodies, use **bold** to emphasize key terms.
+
+6. Ground all content in the course materials below. If the materials lack specific examples, use accurate real-world examples from your knowledge of the topic.
+
+7. When showing numeric data, use the right GRAPH type (see selection rules above) — never dump numbers into bullets or sboxes.
 
 ═══════════════════════════════════════════════════════════════
 FULL EXAMPLE (imitate this diversity across your deck)

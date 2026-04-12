@@ -147,6 +147,29 @@ VISUAL COMPONENTS (use 2-3 per slide, VARY them across slides):
 GRAPHS & DATA VISUALIZATION (use these liberally for anything numeric!)
 ═══════════════════════════════════════════════════════════════
 
+GRAPH TYPE SELECTION — pick the right graph for the data:
+
+  Data pattern                          →  Correct graph type
+  ──────────────────────────────────────────────────────────────
+  Comparing discrete categories         →  barchart
+   (e.g. "Revenue by region", "Scores by team", "Sales by product")
+  Trends or change over time            →  linechart
+   (e.g. "Growth 2020–2026", "Stock price", "User signups per month")
+  Parts of a whole that sum to 100%     →  piechart
+   (e.g. "Market share %", "Budget allocation", "Customer segments by size")
+  Headline KPIs / dashboard numbers     →  metrics
+   (e.g. "Revenue $12M, +23%", "4 big numbers with deltas")
+  Relative achievement or completion    →  progress
+   (e.g. "Campaign awareness 85%", "Target attainment by rep")
+  Few data points, just show numbers    →  table  (or skip graph entirely)
+
+RULES:
+  - Do NOT use a pie chart for data that doesn't sum to 100% or isn't a composition.
+  - Do NOT use a line chart for discrete non-sequential categories — use bar chart.
+  - Do NOT use a bar chart for trends over time — use line chart.
+  - When showing 2–4 headline stats that need to stand out, use metrics (NOT bar chart).
+  - Always match the visual metaphor to the data shape. Wrong chart type = confusion.
+
 ▶ barchart — vertical bar chart (use for: category comparisons, rankings, discrete values):
 {"type":"barchart","title":"Revenue by Quarter","unit":"M","bars":[
   {"label":"Q1","value":12.5,"color":"t"},
@@ -185,16 +208,63 @@ GRAPHS & DATA VISUALIZATION (use these liberally for anything numeric!)
   {"label":"Loyalty","percent":28,"color":"c"}
 ]}
 
-CRITICAL RULES:
-1. Each slide must have 2-3 body components (NOT just bullets).
-2. Narration is 120-180 words — natural, conversational, connects ideas.
-3. When discussing calculations, ALWAYS include a formula component.
-4. When comparing 2 things, use grid2. When comparing 3, use grid3 or segments.
-5. When discussing ANY numeric data (revenue, growth, percentages, rankings, trends), use a GRAPH (barchart/linechart/piechart/metrics/progress) — NOT a sbox or table full of numbers.
-6. Ground content in the course materials below with REAL numbers when available. If exact numbers aren't in the materials, use realistic illustrative values.
-7. Keep component body text concise — ~12-15 words per box.
-8. Use **bold** in body text (the renderer will strip ** markers).
-9. Vary components — aim for at least 2 graph/data-viz components across the deck when the topic is quantitative.
+═══════════════════════════════════════════════════════════════
+CRITICAL: EVERY SLIDE MUST TEACH WITH CONCRETE EXAMPLES
+═══════════════════════════════════════════════════════════════
+
+The single most important rule: **abstract explanations are forbidden**.
+Every slide must include AT LEAST ONE concrete example — real numbers,
+real companies, real scenarios, named historical cases, or worked
+calculations. Students learn 3× faster from specific examples than
+from general principles. Your job is to make everything tangible.
+
+What counts as a good example:
+  ✓ "Apple cut iPhone prices 12% in 2013 to counter Samsung — sold 47M units that quarter, up from 37M"
+  ✓ "A bakery with $10,000 fixed costs, $5 variable cost per cake, $15 selling price → BEP = 1,000 cakes"
+  ✓ "Campbell's Soup's 2019 repositioning: dropped 27% of SKUs to focus on core products, margin rose 4 points"
+  ✓ "Toyota's lean production reduces WIP inventory from 2 weeks to 4 hours at the Georgetown plant"
+
+What does NOT count (these are abstract and will be rejected):
+  ✗ "Companies should reduce costs to improve margins"  (no example)
+  ✗ "Market segmentation is important for targeting"    (no example)
+  ✗ "Pricing affects demand"                            (no example)
+
+BEST COMPONENTS FOR EXAMPLES:
+  • icard  — "EXAMPLE — STARBUCKS" / "CASE STUDY — BOEING 737 MAX" / "WORKED EXAMPLE"
+  • formula — walk through a calculation with specific numbers
+  • sbox   — single colored box with the example story
+  • barchart — show real numbers across categories
+  • linechart — show real trends over time
+
+Example slide with 3 concrete examples:
+{
+  "tag":"Ch. 6 — Price Elasticity","tagColor":"p",
+  "title":"When lowering price grows revenue (and when it doesn't)",
+  "body":[
+    {"type":"grid2","boxes":[
+      {"color":"t","title":"High elasticity","body":"Price cut → revenue up"},
+      {"color":"c","title":"Low elasticity","body":"Price cut → revenue down"}
+    ]},
+    {"type":"icard","title":"EXAMPLE — NETFLIX 2023","body":"Raised prices from $9.99 to $15.49 (+55%). Lost only 2% of subscribers. **Low elasticity** — revenue grew 12%."},
+    {"type":"icard","title":"EXAMPLE — WALMART GROCERY","body":"Cut bread prices 20% in 2019. Volume rose 35%. **High elasticity** — revenue grew 8% even at thinner margins."}
+  ],
+  "narration":"Price elasticity tells us how sensitive customers are to price changes. Consider two real cases from opposite ends of the spectrum. Netflix raised prices 55 percent in 2023 and only lost 2 percent of subscribers — that's low elasticity, and their revenue grew 12 percent. Walmart did the opposite with grocery staples — they cut bread prices 20 percent in 2019 and saw volume rise 35 percent. Same principle, opposite outcomes. The lesson? You have to test your market's elasticity before moving price."
+}
+
+Notice: TWO icard examples, grid2 comparison, and narration that walks through specific numbers. This is the standard.
+
+═══════════════════════════════════════════════════════════════
+OTHER RULES
+═══════════════════════════════════════════════════════════════
+1. Each slide must have 3-4 body components. At least 1 MUST be an example (icard/formula/sbox with named company or specific numbers).
+2. Narration is 120-180 words — natural, conversational, walks through each example.
+3. When discussing any calculation, include a formula component AND an icard "WORKED EXAMPLE" with real numbers.
+4. When comparing 2 things, use grid2 + 2 example icards. When comparing 3, use grid3 or segments + examples.
+5. When discussing numeric data, use a graph component (barchart/linechart/piechart/metrics/progress).
+6. Ground content in the course materials below. If the materials lack specific examples, use accurate real-world examples from your knowledge of the topic.
+7. Use real company names, real years, real dollar amounts whenever possible.
+8. Keep component body text concise — ~12-15 words per box.
+9. Use **bold** in body text (the renderer will strip ** markers).
 
 COURSE MATERIALS:
 ${context || "No materials loaded — use general knowledge of the topic."}${langInstruction}`;
