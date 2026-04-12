@@ -143,14 +143,58 @@ VISUAL COMPONENTS (use 2-3 per slide, VARY them across slides):
   {"text":"Supporting point","color":"a"}
 ]}
 
+═══════════════════════════════════════════════════════════════
+GRAPHS & DATA VISUALIZATION (use these liberally for anything numeric!)
+═══════════════════════════════════════════════════════════════
+
+▶ barchart — vertical bar chart (use for: category comparisons, rankings, discrete values):
+{"type":"barchart","title":"Revenue by Quarter","unit":"M","bars":[
+  {"label":"Q1","value":12.5,"color":"t"},
+  {"label":"Q2","value":15.8,"color":"p"},
+  {"label":"Q3","value":18.2,"color":"a"},
+  {"label":"Q4","value":22.1,"color":"g"}
+]}
+
+▶ linechart — line chart (use for: trends over time, growth curves, before/after):
+{"type":"linechart","title":"User Growth 2020–2026","yLabel":"Users (M)","series":[
+  {"label":"Organic","color":"t","points":[[2020,2.1],[2021,3.5],[2022,5.8],[2023,9.2],[2024,13.0],[2025,18.5],[2026,24.0]]},
+  {"label":"Paid","color":"p","points":[[2020,0.5],[2021,1.2],[2022,2.4],[2023,3.9],[2024,5.1],[2025,6.8],[2026,8.2]]}
+]}
+
+▶ piechart — pie chart with donut hole (use for: market share, proportions, breakdowns):
+{"type":"piechart","title":"Market Share 2026","slices":[
+  {"label":"Company A","value":45,"color":"p"},
+  {"label":"Company B","value":28,"color":"t"},
+  {"label":"Company C","value":15,"color":"a"},
+  {"label":"Others","value":12,"color":"b"}
+]}
+
+▶ metrics — KPI dashboard with up to 4 big numbers (use for: headline stats, key metrics, at-a-glance numbers):
+{"type":"metrics","items":[
+  {"label":"Revenue","value":"$12.5M","delta":"+23%","color":"g"},
+  {"label":"Customers","value":"45K","delta":"+18%","color":"t"},
+  {"label":"Churn","value":"2.1%","delta":"-0.4%","color":"p"},
+  {"label":"NPS","value":"72","delta":"+8","color":"b"}
+]}
+
+▶ progress — horizontal progress bars (use for: completion rates, attainment, relative comparisons):
+{"type":"progress","title":"Campaign Performance","items":[
+  {"label":"Awareness","percent":85,"color":"t"},
+  {"label":"Consideration","percent":62,"color":"p"},
+  {"label":"Purchase Intent","percent":41,"color":"a"},
+  {"label":"Loyalty","percent":28,"color":"c"}
+]}
+
 CRITICAL RULES:
 1. Each slide must have 2-3 body components (NOT just bullets).
 2. Narration is 120-180 words — natural, conversational, connects ideas.
 3. When discussing calculations, ALWAYS include a formula component.
 4. When comparing 2 things, use grid2. When comparing 3, use grid3 or segments.
-5. Ground content in the course materials below.
-6. Keep component body text concise — ~12-15 words per box.
-7. Use **bold** in body text (the renderer will strip ** markers).
+5. When discussing ANY numeric data (revenue, growth, percentages, rankings, trends), use a GRAPH (barchart/linechart/piechart/metrics/progress) — NOT a sbox or table full of numbers.
+6. Ground content in the course materials below with REAL numbers when available. If exact numbers aren't in the materials, use realistic illustrative values.
+7. Keep component body text concise — ~12-15 words per box.
+8. Use **bold** in body text (the renderer will strip ** markers).
+9. Vary components — aim for at least 2 graph/data-viz components across the deck when the topic is quantitative.
 
 COURSE MATERIALS:
 ${context || "No materials loaded — use general knowledge of the topic."}${langInstruction}`;

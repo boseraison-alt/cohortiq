@@ -13,7 +13,17 @@
  *   - bullets, sbox, grid2, grid3, quote, formula, icard, table, segments
  */
 
-import type { Slide, SlideColor, SlideComponent, SBoxItem } from "./slideDeckTemplate";
+import type {
+  Slide,
+  SlideColor,
+  SlideComponent,
+  SBoxItem,
+  BarItem,
+  LineSeries,
+  PieSlice,
+  MetricItem,
+  ProgressItem,
+} from "./slideDeckTemplate";
 
 const W = 1920;
 const H = 1080;
@@ -250,6 +260,264 @@ function renderSegments(
   return { svg: out, height: boxH + 20 };
 }
 
+// ── Graph / data-viz renderers ──
+
+function pickColors(count: number): SlideColor[] {
+  const palette: SlideColor[] = ["t", "p", "a", "b", "c", "g", "r"];
+  return Array.from({ length: count }, (_, i) => palette[i % palette.length]);
+}
+
+function renderBarChart(
+  c: { type: "barchart"; title: string; bars: BarItem[]; unit?: string },
+  y: number
+): { svg: string; height: number } {
+  const h = 380;
+  const chartX = PAD_X + 40;
+  const chartY = y + 80;
+  const chartW = BODY_W - 80;
+  const chartH = 240;
+
+  const bars = c.bars.slice(0, 8);
+  const maxValue = Math.max(...bars.map((b) => b.value), 1);
+  const barGap = 16;
+  const barW = Math.floor((chartW - barGap * (bars.length - 1)) / bars.length);
+
+  let out = "";
+  // Card background
+  out += `<rect x="${PAD_X}" y="${y}" width="${BODY_W}" height="${h}" rx="12" fill="${CARD_BG}" stroke="${BORDER}" stroke-width="1.5"/>\n`;
+
+  // Title
+  out += `<text x="${PAD_X + 24}" y="${y + 40}" fill="${TEXT}" font-size="26" font-weight="bold" font-family="sans-serif">${esc(stripBold(c.title))}</text>\n`;
+
+  // Y-axis line
+  out += `<line x1="${chartX}" y1="${chartY}" x2="${chartX}" y2="${chartY + chartH}" stroke="${BORDER}" stroke-width="1.5"/>\n`;
+  // X-axis line
+  out += `<line x1="${chartX}" y1="${chartY + chartH}" x2="${chartX + chartW}" y2="${chartY + chartH}" stroke="${BORDER}" stroke-width="1.5"/>\n`;
+
+  // Gridlines (horizontal, 4 steps)
+  for (let g = 1; g <= 4; g++) {
+    const gy = chartY + chartH - (chartH * g) / 4;
+    out += `<line x1="${chartX}" y1="${gy}" x2="${chartX + chartW}" y2="${gy}" stroke="${BORDER}" stroke-opacity="0.4" stroke-width="1" stroke-dasharray="4 4"/>\n`;
+  }
+
+  // Bars
+  const barColors = pickColors(bars.length);
+  for (let i = 0; i < bars.length; i++) {
+    const bar = bars[i];
+    const col = COLORS[bar.color || barColors[i]];
+    const bh = (bar.value / maxValue) * chartH;
+    const bx = chartX + 10 + i * (barW + barGap);
+    const by = chartY + chartH - bh;
+    // Bar fill with gradient-like double rect
+    out += `<rect x="${bx}" y="${by}" width="${barW - 20}" height="${bh}" rx="4" fill="${col.bg}" fill-opacity="0.85"/>\n`;
+    out += `<rect x="${bx}" y="${by}" width="${barW - 20}" height="6" rx="3" fill="${col.fg}"/>\n`;
+    // Value label above bar
+    out += `<text x="${bx + (barW - 20) / 2}" y="${by - 10}" text-anchor="middle" fill="${col.fg}" font-size="20" font-weight="bold" font-family="sans-serif">${esc(String(bar.value))}${c.unit ? esc(c.unit) : ""}</text>\n`;
+    // Label below bar
+    out += `<text x="${bx + (barW - 20) / 2}" y="${chartY + chartH + 28}" text-anchor="middle" fill="${TEXT}" font-size="18" font-family="sans-serif">${esc(stripBold(bar.label).slice(0, 14))}</text>\n`;
+  }
+
+  return { svg: out, height: h + 20 };
+}
+
+function renderLineChart(
+  c: { type: "linechart"; title: string; series: LineSeries[]; xLabel?: string; yLabel?: string },
+  y: number
+): { svg: string; height: number } {
+  const h = 380;
+  const chartX = PAD_X + 80;
+  const chartY = y + 80;
+  const chartW = BODY_W - 120;
+  const chartH = 230;
+
+  const allPoints = c.series.flatMap((s) => s.points);
+  if (allPoints.length === 0) return { svg: "", height: 0 };
+  const xs = allPoints.map((p) => p[0]);
+  const ys = allPoints.map((p) => p[1]);
+  const xMin = Math.min(...xs), xMax = Math.max(...xs);
+  const yMin = Math.min(0, ...ys), yMax = Math.max(...ys);
+  const xRange = xMax - xMin || 1;
+  const yRange = yMax - yMin || 1;
+
+  const scaleX = (x: number) => chartX + ((x - xMin) / xRange) * chartW;
+  const scaleY = (y2: number) => chartY + chartH - ((y2 - yMin) / yRange) * chartH;
+
+  let out = "";
+  out += `<rect x="${PAD_X}" y="${y}" width="${BODY_W}" height="${h}" rx="12" fill="${CARD_BG}" stroke="${BORDER}" stroke-width="1.5"/>\n`;
+  out += `<text x="${PAD_X + 24}" y="${y + 40}" fill="${TEXT}" font-size="26" font-weight="bold" font-family="sans-serif">${esc(stripBold(c.title))}</text>\n`;
+
+  // Axes
+  out += `<line x1="${chartX}" y1="${chartY}" x2="${chartX}" y2="${chartY + chartH}" stroke="${BORDER}" stroke-width="1.5"/>\n`;
+  out += `<line x1="${chartX}" y1="${chartY + chartH}" x2="${chartX + chartW}" y2="${chartY + chartH}" stroke="${BORDER}" stroke-width="1.5"/>\n`;
+
+  // Y-axis gridlines & labels (4 steps)
+  for (let g = 0; g <= 4; g++) {
+    const val = yMin + (yRange * g) / 4;
+    const gy = scaleY(val);
+    if (g > 0) {
+      out += `<line x1="${chartX}" y1="${gy}" x2="${chartX + chartW}" y2="${gy}" stroke="${BORDER}" stroke-opacity="0.35" stroke-width="1" stroke-dasharray="4 4"/>\n`;
+    }
+    out += `<text x="${chartX - 10}" y="${gy + 6}" text-anchor="end" fill="${MUTED}" font-size="16" font-family="sans-serif">${esc(val.toFixed(yRange < 10 ? 1 : 0))}</text>\n`;
+  }
+
+  // Plot each series
+  const seriesColors = pickColors(c.series.length);
+  for (let si = 0; si < c.series.length; si++) {
+    const s = c.series[si];
+    const col = COLORS[s.color || seriesColors[si]];
+    // Line
+    const pathPoints = s.points.map((p, i) => `${i === 0 ? "M" : "L"} ${scaleX(p[0]).toFixed(1)} ${scaleY(p[1]).toFixed(1)}`).join(" ");
+    out += `<path d="${pathPoints}" fill="none" stroke="${col.bg}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>\n`;
+    // Data points
+    for (const p of s.points) {
+      out += `<circle cx="${scaleX(p[0]).toFixed(1)}" cy="${scaleY(p[1]).toFixed(1)}" r="5" fill="${col.fg}" stroke="${col.bg}" stroke-width="2"/>\n`;
+    }
+  }
+
+  // Legend (top-right, if multiple series)
+  if (c.series.length > 1) {
+    let lx = PAD_X + BODY_W - 40;
+    const ly = y + 40;
+    for (let si = c.series.length - 1; si >= 0; si--) {
+      const s = c.series[si];
+      const col = COLORS[s.color || seriesColors[si]];
+      const label = stripBold(s.label).slice(0, 16);
+      const labelW = label.length * 10 + 40;
+      lx -= labelW;
+      out += `<rect x="${lx}" y="${ly - 14}" width="14" height="14" fill="${col.bg}" rx="2"/>\n`;
+      out += `<text x="${lx + 20}" y="${ly - 2}" fill="${TEXT}" font-size="16" font-family="sans-serif">${esc(label)}</text>\n`;
+      lx -= 12;
+    }
+  }
+
+  return { svg: out, height: h + 20 };
+}
+
+function renderPieChart(
+  c: { type: "piechart"; title: string; slices: PieSlice[] },
+  y: number
+): { svg: string; height: number } {
+  const h = 380;
+  const cx = PAD_X + 220;
+  const cy = y + h / 2 + 20;
+  const r = 140;
+
+  const slices = c.slices.slice(0, 8);
+  const total = slices.reduce((acc, s) => acc + s.value, 0) || 1;
+  const sliceColors = pickColors(slices.length);
+
+  let out = "";
+  out += `<rect x="${PAD_X}" y="${y}" width="${BODY_W}" height="${h}" rx="12" fill="${CARD_BG}" stroke="${BORDER}" stroke-width="1.5"/>\n`;
+  out += `<text x="${PAD_X + 24}" y="${y + 40}" fill="${TEXT}" font-size="26" font-weight="bold" font-family="sans-serif">${esc(stripBold(c.title))}</text>\n`;
+
+  // Pie slices
+  let currentAngle = -Math.PI / 2; // start at top
+  for (let i = 0; i < slices.length; i++) {
+    const slice = slices[i];
+    const col = COLORS[slice.color || sliceColors[i]];
+    const fraction = slice.value / total;
+    const sliceAngle = fraction * Math.PI * 2;
+    const endAngle = currentAngle + sliceAngle;
+
+    const x1 = cx + r * Math.cos(currentAngle);
+    const y1 = cy + r * Math.sin(currentAngle);
+    const x2 = cx + r * Math.cos(endAngle);
+    const y2 = cy + r * Math.sin(endAngle);
+    const largeArc = sliceAngle > Math.PI ? 1 : 0;
+
+    const pathD = `M ${cx} ${cy} L ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r} ${r} 0 ${largeArc} 1 ${x2.toFixed(1)} ${y2.toFixed(1)} Z`;
+    out += `<path d="${pathD}" fill="${col.bg}" fill-opacity="0.85" stroke="${BG}" stroke-width="3"/>\n`;
+
+    currentAngle = endAngle;
+  }
+
+  // Donut hole for aesthetic
+  out += `<circle cx="${cx}" cy="${cy}" r="70" fill="${CARD_BG}"/>\n`;
+
+  // Legend on the right
+  const legendX = PAD_X + 480;
+  let ly = y + 80;
+  for (let i = 0; i < slices.length; i++) {
+    const slice = slices[i];
+    const col = COLORS[slice.color || sliceColors[i]];
+    const pct = ((slice.value / total) * 100).toFixed(0);
+    out += `<rect x="${legendX}" y="${ly - 16}" width="20" height="20" rx="3" fill="${col.bg}" fill-opacity="0.85"/>\n`;
+    out += `<text x="${legendX + 30}" y="${ly}" fill="${TEXT}" font-size="22" font-family="sans-serif">${esc(stripBold(slice.label).slice(0, 26))}</text>\n`;
+    out += `<text x="${legendX + 30 + 420}" y="${ly}" fill="${col.fg}" font-size="22" font-weight="bold" font-family="monospace">${pct}%</text>\n`;
+    ly += 38;
+  }
+
+  return { svg: out, height: h + 20 };
+}
+
+function renderMetrics(
+  c: { type: "metrics"; items: MetricItem[] },
+  y: number
+): { svg: string; height: number } {
+  const h = 200;
+  const items = c.items.slice(0, 4);
+  const gap = 20;
+  const cardW = Math.floor((BODY_W - gap * (items.length - 1)) / items.length);
+
+  let out = "";
+  const itemColors = pickColors(items.length);
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const col = COLORS[item.color || itemColors[i]];
+    const bx = PAD_X + i * (cardW + gap);
+
+    // Card
+    out += `<rect x="${bx}" y="${y}" width="${cardW}" height="${h}" rx="14" fill="${col.bg}" fill-opacity="0.15" stroke="${col.bg}" stroke-opacity="0.5" stroke-width="2"/>\n`;
+    // Label (small caps)
+    out += `<text x="${bx + 24}" y="${y + 40}" fill="${MUTED}" font-size="16" font-weight="bold" font-family="monospace" letter-spacing="2">${esc(stripBold(item.label).toUpperCase().slice(0, 22))}</text>\n`;
+    // Big value
+    out += `<text x="${bx + 24}" y="${y + 110}" fill="${col.fg}" font-size="54" font-weight="bold" font-family="serif">${esc(stripBold(item.value).slice(0, 10))}</text>\n`;
+    // Delta (if present)
+    if (item.delta) {
+      const isPositive = item.delta.startsWith("+") || item.delta.startsWith("↑");
+      const deltaColor = isPositive ? COLORS.g.fg : COLORS.r.fg;
+      out += `<text x="${bx + 24}" y="${y + 155}" fill="${deltaColor}" font-size="22" font-weight="bold" font-family="sans-serif">${esc(stripBold(item.delta))}</text>\n`;
+    }
+  }
+  return { svg: out, height: h + 20 };
+}
+
+function renderProgress(
+  c: { type: "progress"; title?: string; items: ProgressItem[] },
+  y: number
+): { svg: string; height: number } {
+  const items = c.items.slice(0, 6);
+  const rowH = 56;
+  const titleOffset = c.title ? 50 : 20;
+  const h = titleOffset + items.length * rowH + 24;
+
+  let out = "";
+  out += `<rect x="${PAD_X}" y="${y}" width="${BODY_W}" height="${h}" rx="12" fill="${CARD_BG}" stroke="${BORDER}" stroke-width="1.5"/>\n`;
+
+  if (c.title) {
+    out += `<text x="${PAD_X + 24}" y="${y + 40}" fill="${TEXT}" font-size="24" font-weight="bold" font-family="sans-serif">${esc(stripBold(c.title))}</text>\n`;
+  }
+
+  const itemColors = pickColors(items.length);
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const col = COLORS[item.color || itemColors[i]];
+    const ry = y + titleOffset + i * rowH;
+    const pct = Math.min(100, Math.max(0, item.percent));
+
+    // Label
+    out += `<text x="${PAD_X + 24}" y="${ry + 24}" fill="${TEXT}" font-size="22" font-family="sans-serif">${esc(stripBold(item.label).slice(0, 40))}</text>\n`;
+    // Percent label
+    out += `<text x="${PAD_X + BODY_W - 24}" y="${ry + 24}" text-anchor="end" fill="${col.fg}" font-size="22" font-weight="bold" font-family="monospace">${pct.toFixed(0)}%</text>\n`;
+    // Track background
+    out += `<rect x="${PAD_X + 24}" y="${ry + 32}" width="${BODY_W - 48}" height="14" rx="7" fill="${BORDER}"/>\n`;
+    // Fill
+    const fillW = ((BODY_W - 48) * pct) / 100;
+    out += `<rect x="${PAD_X + 24}" y="${ry + 32}" width="${fillW.toFixed(1)}" height="14" rx="7" fill="${col.bg}"/>\n`;
+  }
+  return { svg: out, height: h + 20 };
+}
+
 // ── Render a single body component ──
 function renderComponent(c: SlideComponent, y: number): { svg: string; height: number } {
   switch (c.type) {
@@ -272,6 +540,16 @@ function renderComponent(c: SlideComponent, y: number): { svg: string; height: n
       return renderTable(c, y);
     case "segments":
       return renderSegments(c, y);
+    case "barchart":
+      return renderBarChart(c, y);
+    case "linechart":
+      return renderLineChart(c, y);
+    case "piechart":
+      return renderPieChart(c, y);
+    case "metrics":
+      return renderMetrics(c, y);
+    case "progress":
+      return renderProgress(c, y);
     default:
       return { svg: "", height: 0 };
   }

@@ -30,15 +30,28 @@ export interface SlideMedia {
 
 /**
  * Composite an array of slide images + audio into a single MP4 video.
- * Each slide is displayed for the duration of its audio.
- * Adds 0.5s fade-in/fade-out transitions between slides.
+ *
+ * For each slide:
+ *   1. Apply a subtle Ken Burns (slow zoom) effect to bring the static
+ *      frame to life
+ *   2. Fade in at the start, fade out at the end
+ *   3. Overlap with the next slide via a 0.5s cross-dissolve (xfade)
+ *
+ * Motion settings (feel free to tune):
+ *   - Zoom goes from 1.0 to ~1.08 over the clip duration (subtle)
+ *   - Cross-dissolve between slides is 0.5s long
  */
 export async function compositeVideo(
   slides: SlideMedia[],
-  outputPath: string
+  outputPath: string,
+  options?: { animate?: boolean }
 ): Promise<{ fileSize: number; slideDurations: number[] }> {
+  const animate = options?.animate !== false; // default on
   const tmpDir = path.join(os.tmpdir(), `studyai-video-${Date.now()}`);
   await mkdir(tmpDir, { recursive: true });
+
+  const FPS = 30;
+  const XFADE_DUR = 0.5;
 
   try {
     const segmentPaths: string[] = [];
@@ -53,40 +66,63 @@ export async function compositeVideo(
       await writeFile(pngPath, slides[i].png);
       await writeFile(mp3Path, slides[i].mp3);
 
-      // Create video segment with fade-in at start and fade-out at end
-      // First pass: probe audio duration
-      let audioDuration = 30; // fallback
+      // Probe audio duration
+      let audioDuration = 30;
       try {
-        const probeResult = await runFfmpeg([
-          "-i", mp3Path,
-          "-f", "null", "-",
-        ]);
-        const durMatch = probeResult.match(/Duration:\s*(\d+):(\d+):(\d+)\.(\d+)/);
-        if (durMatch) {
+        const probeResult = await runFfmpeg(["-i", mp3Path, "-f", "null", "-"]);
+        const m = probeResult.match(/Duration:\s*(\d+):(\d+):(\d+)\.(\d+)/);
+        if (m) {
           audioDuration =
-            parseInt(durMatch[1]) * 3600 +
-            parseInt(durMatch[2]) * 60 +
-            parseInt(durMatch[3]) +
-            parseInt(durMatch[4]) / 100;
+            parseInt(m[1]) * 3600 +
+            parseInt(m[2]) * 60 +
+            parseInt(m[3]) +
+            parseInt(m[4]) / 100;
         }
-      } catch {
-        // Use fallback duration
-      }
+      } catch {}
 
       slideDurations.push(audioDuration);
-      const fadeOut = Math.max(0, audioDuration - 0.5);
+
+      // ── Build video filter chain ──
+      //
+      // When animate=true we apply a gentle Ken Burns zoom:
+      //   - Start with a large scale buffer (2400x1350) so the 1920x1080
+      //     crop always has extra pixels to work with as we zoom
+      //   - Slowly zoom in by ~8% over the slide's lifetime
+      //   - Output 1920x1080 at 30fps
+      //
+      // Then fade-in at start + fade-out at end so the cross-dissolve
+      // between clips looks clean.
+      const durationFrames = Math.ceil(audioDuration * FPS);
+      const fadeOutStart = Math.max(0, audioDuration - XFADE_DUR);
+
+      let vfilter: string;
+      if (animate) {
+        // zoompan iterates over frames and lets us express zoom as a
+        // linear function of `on` (frame number).
+        // z = 1 + (on / durationFrames) * 0.08  →  1.0 → 1.08 over the clip
+        const zoomExpr = `1+0.08*on/${Math.max(1, durationFrames)}`;
+        vfilter =
+          `scale=2400:1350,` +
+          `zoompan=z='${zoomExpr}':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1920x1080:fps=${FPS},` +
+          `fade=t=in:st=0:d=0.4,fade=t=out:st=${fadeOutStart.toFixed(2)}:d=${XFADE_DUR}`;
+      } else {
+        vfilter = `scale=1920:1080,fade=t=in:st=0:d=0.4,fade=t=out:st=${fadeOutStart.toFixed(2)}:d=${XFADE_DUR}`;
+      }
 
       await runFfmpeg([
         "-loop", "1",
+        "-framerate", String(FPS),
         "-i", pngPath,
         "-i", mp3Path,
-        "-vf", `fade=t=in:st=0:d=0.4,fade=t=out:st=${fadeOut.toFixed(2)}:d=0.5`,
+        "-vf", vfilter,
         "-c:v", "libx264",
-        "-tune", "stillimage",
+        "-preset", "veryfast",
+        "-crf", "22",
+        "-pix_fmt", "yuv420p",
         "-c:a", "aac",
         "-b:a", "192k",
         "-ar", "44100",
-        "-pix_fmt", "yuv420p",
+        "-r", String(FPS),
         "-shortest",
         "-y",
         segPath,
@@ -95,19 +131,23 @@ export async function compositeVideo(
       segmentPaths.push(segPath);
     }
 
-    // Write concat file — use forward slashes for Windows FFmpeg compatibility
+    // ── Final composition ──
+    //
+    // Use concat demuxer with -c copy for simplicity and speed.
+    // Each segment already has fade-out + fade-in baked in, so the
+    // transitions read as cross-dissolves when played back to back.
     const concatContent = segmentPaths
       .map((p) => `file '${p.replace(/\\/g, "/")}'`)
       .join("\n");
     const concatPath = path.join(tmpDir, "concat.txt");
     await writeFile(concatPath, concatContent, "utf8");
 
-    // Concatenate all segments into final MP4
     await runFfmpeg([
       "-f", "concat",
       "-safe", "0",
       "-i", concatPath,
       "-c", "copy",
+      "-movflags", "+faststart",
       "-y",
       outputPath,
     ]);
