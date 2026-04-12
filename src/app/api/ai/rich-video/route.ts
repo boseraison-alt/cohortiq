@@ -11,6 +11,7 @@ import { renderSlideToPng } from "@/lib/slides";
 import { buildRichSlideSvg } from "@/lib/richSlides";
 import { compositeVideo } from "@/lib/ffmpeg";
 import { getUploadDir, getUploadUrl } from "@/lib/uploads";
+import { recoverDeckJson } from "@/lib/jsonRecovery";
 import { mkdir } from "fs/promises";
 import path from "path";
 import type { Slide } from "@/lib/slideDeckTemplate";
@@ -86,6 +87,16 @@ Topic: "${topic.trim()}"
 Slide count: ${slideCount}
 
 Return ONLY a valid JSON object. No markdown fences.
+
+CRITICAL JSON FORMATTING RULES (READ CAREFULLY — syntax errors break the whole deck):
+- Escape ALL double quotes inside string values with a backslash: \\"
+- Do NOT use curly/smart quotes " " ' ' inside string values. Use straight quotes only.
+- Do NOT use unescaped newlines inside string values. Use the literal characters \\n or just a space.
+- For quotations within narration text, use single quotes (') instead of escaped double quotes.
+  GOOD: "narration": "Apple said 'we are the best' in 2023."
+  BAD:  "narration": "Apple said "we are the best" in 2023."
+- Do NOT put trailing commas before ] or }.
+- Do NOT add any text outside the JSON object — no explanations, no markdown.
 
 STRUCTURE:
 {
@@ -272,34 +283,42 @@ ${context || "No materials loaded — use general knowledge of the topic."}${lan
     const raw = await askClaude(
       systemPrompt,
       `Generate the ${slideCount}-slide rich narrated presentation on: "${topic.trim()}"`,
-      16000
+      32000  // give Claude plenty of headroom — prior 16K was truncating
     );
 
     console.log("[rich-video] Claude responded", {
       rawLength: raw?.length || 0,
       startsWith: (raw || "").slice(0, 80),
+      endsWith: (raw || "").slice(-80),
     });
 
-    // Parse JSON
-    let parsed: { deckTitle?: string; subtitle?: string; slides: Slide[] };
-    try {
-      const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
-      parsed = JSON.parse(cleaned);
-    } catch {
-      const start = raw.indexOf("{");
-      const end = raw.lastIndexOf("}");
-      if (start < 0 || end <= start) {
-        return NextResponse.json(
-          { error: `Claude returned non-JSON output. First 300 chars: ${raw.slice(0, 300)}` },
-          { status: 500 }
-        );
-      }
-      parsed = JSON.parse(raw.slice(start, end + 1));
+    // ── Robust JSON recovery ──
+    // Claude occasionally produces slightly broken JSON (unescaped
+    // quotes in narration, trailing commas, truncated output). The
+    // recoverDeckJson helper walks the slides array and extracts
+    // every valid slide it can, so a single bad slide doesn't lose
+    // the entire deck.
+    const parsed: { deckTitle?: string; subtitle?: string; slides: Slide[] } | null =
+      recoverDeckJson(raw) as any;
+
+    if (!parsed?.slides?.length) {
+      console.error("[rich-video] Unrecoverable Claude output", {
+        length: raw?.length || 0,
+        preview: (raw || "").slice(0, 500),
+      });
+      return NextResponse.json(
+        {
+          error:
+            "Claude returned unparseable JSON. Please try again — this usually works on retry. If it keeps failing, try a different topic.",
+        },
+        { status: 500 }
+      );
     }
 
-    if (!parsed?.slides || !Array.isArray(parsed.slides) || !parsed.slides.length) {
-      return NextResponse.json({ error: "No slides generated" }, { status: 500 });
-    }
+    console.log("[rich-video] Recovered slide deck", {
+      slidesGenerated: parsed.slides.length,
+      deckTitle: parsed.deckTitle,
+    });
 
     // ── Render each slide: SVG → PNG + TTS audio ──
     const totalSlides = parsed.slides.length;

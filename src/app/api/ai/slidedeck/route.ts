@@ -6,6 +6,7 @@ import { askClaude } from "@/lib/claude";
 import { buildContext } from "@/lib/chunks";
 import { logUsage } from "@/lib/usage";
 import { getUserPrefsPrompt } from "@/lib/preferences";
+import { recoverDeckJson } from "@/lib/jsonRecovery";
 import type { Slide } from "@/lib/slideDeckTemplate";
 
 export const dynamic = "force-dynamic";
@@ -93,6 +94,15 @@ Topic: "${topic.trim()}"
 Exact slide count: ${slideCount}
 
 Return ONLY a valid JSON object. No markdown fences. No commentary.
+
+CRITICAL JSON FORMATTING RULES (syntax errors break the whole deck):
+- Escape all double quotes inside string values with a backslash.
+- Use straight quotes only — never curly/smart quotes (" " ' ') inside strings.
+- For quotations inside body text, use single quotes instead of escaped double quotes:
+  GOOD: "body":"Walmart's 'Everyday Low Prices' strategy..."
+  BAD:  "body":"Walmart's "Everyday Low Prices" strategy..."
+- No trailing commas before ] or }.
+- No text outside the JSON object.
 
 ═══════════════════════════════════════════════════════════════
 JSON STRUCTURE
@@ -324,7 +334,7 @@ REMEMBER: If you produce a deck where every slide is just a "bullets" component,
     const raw = await askClaude(
       systemPrompt,
       `Create the ${slideCount}-slide interactive deck on: "${topic.trim()}"`,
-      16000
+      32000  // plenty of headroom — prior 16K could truncate rich decks
     );
 
     console.log("[slidedeck] Claude responded", {
@@ -333,44 +343,31 @@ REMEMBER: If you produce a deck where every slide is just a "bullets" component,
       endsWith: (raw || "").slice(-80),
     });
 
-    // Parse Claude's JSON response — be aggressive about finding valid JSON
-    let parsed: { deckTitle: string; subtitle?: string; slides: Slide[] };
-    try {
-      // Strip markdown code fences if present
-      const cleaned = raw
-        .replace(/^```(?:json)?\s*/i, "")
-        .replace(/\s*```\s*$/i, "")
-        .trim();
-      parsed = JSON.parse(cleaned);
-    } catch (parseErr) {
-      // Fall back: find the first { and match braces
-      const start = raw.indexOf("{");
-      const end = raw.lastIndexOf("}");
-      if (start < 0 || end <= start) {
-        console.error("[slidedeck] Cannot find JSON in response:", raw.slice(0, 500));
-        return NextResponse.json(
-          {
-            error: `Claude returned non-JSON output. First 300 chars: ${raw.slice(0, 300)}`,
-          },
-          { status: 500 }
-        );
-      }
-      try {
-        parsed = JSON.parse(raw.slice(start, end + 1));
-      } catch (secondErr: any) {
-        console.error("[slidedeck] JSON parse failed:", secondErr?.message, raw.slice(0, 500));
-        return NextResponse.json(
-          {
-            error: `Slide deck JSON parse error: ${secondErr?.message || "unknown"}. Response started with: ${raw.slice(0, 200)}`,
-          },
-          { status: 500 }
-        );
-      }
+    // ── Robust JSON recovery ──
+    // If Claude produces slightly broken JSON (unescaped quotes,
+    // truncation, trailing commas), recoverDeckJson walks the slides
+    // array and rescues every valid slide it can parse.
+    const parsed = recoverDeckJson(raw) as
+      | { deckTitle?: string; subtitle?: string; slides: Slide[] }
+      | null;
+
+    if (!parsed?.slides?.length) {
+      console.error("[slidedeck] Unrecoverable Claude output", {
+        length: raw?.length || 0,
+        preview: (raw || "").slice(0, 500),
+      });
+      return NextResponse.json(
+        {
+          error:
+            "Claude returned unparseable JSON. Please try again — this usually works on retry.",
+        },
+        { status: 500 }
+      );
     }
 
-    if (!parsed?.slides || !Array.isArray(parsed.slides) || !parsed.slides.length) {
-      return NextResponse.json({ error: "No slides generated" }, { status: 500 });
-    }
+    console.log("[slidedeck] Recovered slide deck", {
+      slidesGenerated: parsed.slides.length,
+    });
 
     // ── Component diversity audit (soft — logs only, never rejects) ──
     const counts: Record<string, number> = {
