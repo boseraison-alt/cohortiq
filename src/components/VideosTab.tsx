@@ -697,57 +697,53 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
     setRichBusy(true);
     setRichError("");
     setRichStatus("Writing rich slides with Claude...");
-    console.log("[rich-video client v3] starting", { topic: topic.trim(), numSlides: richNumSlides });
+    console.log("[rich-video client v4] starting", { topic: topic.trim(), numSlides: richNumSlides });
     try {
-      const startedAt = Date.now();
-      const res = await fetch("/api/ai/rich-video", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          courseId,
-          topic: topic.trim(),
-          numSlides: richNumSlides,
-          lang,
-        }),
-      });
-      const elapsedMs = Date.now() - startedAt;
-      const text = await res.text();
-      console.log("[rich-video client v3] response", {
-        status: res.status,
-        statusText: res.statusText,
-        elapsedMs,
-        bodyLength: text.length,
-        bodyPreview: text.slice(0, 500),
-      });
+      // Helper to call an endpoint and return parsed JSON or throw with details
+      const callPhase = async (url: string, body: any, phaseLabel: string) => {
+        setRichStatus(phaseLabel);
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const text = await res.text();
+        let data: any = null;
+        try { data = JSON.parse(text); } catch {}
+        if (!res.ok) {
+          const serverMsg = data?.error || data?.message || "";
+          const statusHint =
+            res.status === 502 ? "Server timed out" :
+            res.status === 503 ? "Server temporarily unavailable" :
+            res.status === 504 ? "Gateway timeout" :
+            res.status >= 500 ? `Server error ${res.status}` :
+            `HTTP ${res.status}`;
+          throw new Error(`[${res.status}] ${serverMsg || statusHint}`);
+        }
+        if (!data) throw new Error("Server returned non-JSON");
+        return data;
+      };
 
-      // Try to parse as JSON and extract a usable error message from any field
-      let data: any = null;
-      try { data = JSON.parse(text); } catch {}
+      // ── PHASE 1: Generate slides with Claude → save to DB ──
+      const phase1 = await callPhase(
+        "/api/ai/rich-video",
+        { courseId, topic: topic.trim(), numSlides: richNumSlides, lang },
+        `Phase 1: Writing ${richNumSlides} rich slides with Claude…`
+      );
+      console.log("[rich-video client v4] Phase 1 done", phase1);
 
-      if (!res.ok) {
-        const serverMsg =
-          data?.error || data?.message || data?.detail || data?.err || "";
-        const bodySnippet = text?.slice(0, 300) || "";
-        const statusHint =
-          res.status === 503 ? "Server temporarily unavailable" :
-          res.status === 504 ? `Gateway timeout after ${Math.round(elapsedMs / 1000)}s` :
-          res.status === 502 ? "Bad gateway (server restarted)" :
-          res.status >= 500 ? `Server error ${res.status}` :
-          res.status === 401 ? "Unauthorized — please sign in again" :
-          `HTTP ${res.status}`;
-        throw new Error(
-          `[${res.status}] ${serverMsg || statusHint}${!serverMsg && bodySnippet ? ` — ${bodySnippet}` : ""}`
-        );
-      }
-
-      if (!data) {
-        throw new Error(`Server returned non-JSON response (${text.length} bytes): ${text.slice(0, 200)}`);
-      }
+      // ── PHASE 2: Render PNG + TTS + FFmpeg → final MP4 ──
+      const phase2 = await callPhase(
+        "/api/ai/rich-video/render",
+        { videoId: phase1.videoId },
+        `Phase 2: Rendering ${phase1.slideCount} slides (narration + video)…`
+      );
+      console.log("[rich-video client v4] Phase 2 done", phase2);
 
       // Refresh library and focus the new video
       await loadVideos();
-      if (data.video) {
-        setActiveVideo(data.video);
+      if (phase2.video) {
+        setActiveVideo(phase2.video);
         setTopic("");
       }
     } catch (e: any) {

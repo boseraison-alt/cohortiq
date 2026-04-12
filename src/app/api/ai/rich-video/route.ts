@@ -6,14 +6,7 @@ import { askClaude } from "@/lib/claude";
 import { buildContext } from "@/lib/chunks";
 import { logUsage } from "@/lib/usage";
 import { getUserPrefsPrompt } from "@/lib/preferences";
-import { generateSpeech, splitIntoChunks } from "@/lib/tts";
-import { renderSlideToPng } from "@/lib/slides";
-import { buildRichSlideSvg } from "@/lib/richSlides";
-import { compositeVideo } from "@/lib/ffmpeg";
-import { getUploadDir, getUploadUrl } from "@/lib/uploads";
 import { recoverDeckJson } from "@/lib/jsonRecovery";
-import { mkdir } from "fs/promises";
-import path from "path";
 import type { Slide } from "@/lib/slideDeckTemplate";
 
 export const dynamic = "force-dynamic";
@@ -366,183 +359,42 @@ ${context || "No materials loaded — use general knowledge of the topic."}${lan
       deckTitle: parsed.deckTitle,
     });
 
-    // ── Phase 1: Render all slides to PNG (SERIAL — avoids resvg-js memory spikes) ──
-    // resvg-js can allocate a lot of memory per render; running many in parallel
-    // on Railway's limited containers has caused OOM crashes (502s). Serial is
-    // plenty fast — each slide renders in under a second.
-    const totalSlides = parsed.slides.length;
-    console.log(`[rich-video] Phase 1: rendering ${totalSlides} PNG slides serially`);
-    const phase1Start = Date.now();
-    const pngs: Buffer[] = [];
-    for (let i = 0; i < totalSlides; i++) {
-      const slide = parsed.slides[i];
-      let svg: string;
-      try {
-        svg = buildRichSlideSvg(slide, i, totalSlides, accentColor, courseName);
-      } catch (stepErr: any) {
-        throw new Error(
-          `Slide ${i + 1}/${totalSlides} SVG build failed: ${stepErr?.message || stepErr}. Slide title: "${slide?.title || "unknown"}"`
-        );
-      }
-      try {
-        pngs.push(await renderSlideToPng(svg));
-      } catch (stepErr: any) {
-        throw new Error(
-          `Slide ${i + 1}/${totalSlides} PNG render failed: ${stepErr?.message || stepErr}`
-        );
-      }
-    }
-    console.log(
-      `[rich-video] Phase 1 done in ${Math.round((Date.now() - phase1Start) / 1000)}s`
-    );
-
-    // ── Phase 2: Generate TTS audio (CONCURRENCY-LIMITED to 3) ──
-    // OpenAI TTS can be slow (~3-5s per request) so parallelism helps,
-    // but 8 simultaneous requests exhausts Node's default HTTP agent
-    // socket pool on some environments. Limit to 3 concurrent.
-    console.log(`[rich-video] Phase 2: generating TTS with concurrency=3`);
-    const phase2Start = Date.now();
-    const mp3s: Buffer[] = new Array(totalSlides);
-    const CONCURRENCY = 3;
-    let nextIdx = 0;
-
-    const workers = Array.from({ length: Math.min(CONCURRENCY, totalSlides) }, async () => {
-      while (true) {
-        const i = nextIdx++;
-        if (i >= totalSlides) return;
-        const slide = parsed.slides[i];
-
-        const narrationText =
-          slide.narration ||
-          `${slide.title}. ${(slide.body || [])
-            .map((c: any) =>
-              c.type === "bullets"
-                ? c.items?.map((it: any) => it.text).join(". ")
-                : c.type === "quote"
-                ? c.text
-                : c.type === "sbox"
-                ? `${c.box?.title}. ${c.box?.body}`
-                : c.type === "formula"
-                ? c.text
-                : c.type === "icard"
-                ? `${c.title}. ${c.body}`
-                : ""
-            )
-            .filter(Boolean)
-            .join(". ")}`;
-
-        if (!narrationText.trim()) {
-          throw new Error(
-            `Slide ${i + 1}/${totalSlides} has empty narration.`
-          );
-        }
-
-        try {
-          const textChunks = splitIntoChunks(narrationText, 4000);
-          const audioBuffers: Buffer[] = [];
-          for (const chunk of textChunks) {
-            audioBuffers.push(await generateSpeech(chunk, "onyx"));
-          }
-          mp3s[i] = Buffer.concat(audioBuffers);
-        } catch (stepErr: any) {
-          throw new Error(
-            `Slide ${i + 1}/${totalSlides} TTS failed: ${stepErr?.message || stepErr}`
-          );
-        }
-      }
-    });
-
-    await Promise.all(workers);
-    console.log(
-      `[rich-video] Phase 2 done in ${Math.round((Date.now() - phase2Start) / 1000)}s`
-    );
-
-    const slideMedia = pngs.map((png, i) => ({ png, mp3: mp3s[i] }));
-
-    // ── Composite into MP4 ──
-    const uploadDir = getUploadDir("videos");
-    await mkdir(uploadDir, { recursive: true });
-
-    const safeTopic = (topic || "rich_presentation")
-      .replace(/[^a-zA-Z0-9 _-]/g, "")
-      .replace(/\s+/g, "_")
-      .slice(0, 40);
-    const fileName = `rich_${safeTopic}_${Date.now()}.mp4`;
-    const outputPath = path.join(uploadDir, fileName);
-
-    let fileSize: number;
-    let slideDurations: number[];
-    try {
-      const result = await compositeVideo(slideMedia, outputPath, { cinematic: true });
-      fileSize = result.fileSize;
-      slideDurations = result.slideDurations;
-    } catch (stepErr: any) {
-      throw new Error(
-        `FFmpeg composition failed: ${stepErr?.message || stepErr}`
-      );
-    }
-
-    // Build enriched slide data — include both rich components and legacy fields
-    // so the existing AnnotatedVideoPlayer can still render the right-side panel.
-    const enrichedSlides = parsed.slides.map((s: Slide, i: number) => ({
-      // Legacy fields used by AnnotatedVideoPlayer
-      title: s.title,
-      points: (s.body || [])
-        .flatMap((c: any) => {
-          if (c.type === "bullets") return (c.items || []).map((i: any) => i.text);
-          if (c.type === "sbox") return [`${c.box?.title}: ${c.box?.body}`];
-          if (c.type === "grid2" || c.type === "grid3") return (c.boxes || []).map((b: any) => `${b.title}: ${b.body}`);
-          if (c.type === "quote") return [`"${c.text}"`];
-          if (c.type === "formula") return [c.text];
-          if (c.type === "icard") return [`${c.title}: ${c.body}`];
-          return [];
-        })
-        .slice(0, 8),
-      narration: s.narration || "",
-      icon: "",
-      formulas: (s.body || [])
-        .filter((c: any) => c.type === "formula")
-        .map((c: any) => c.text),
-      duration: slideDurations[i] ?? 30,
-      // Rich fields — kept so the data round-trips correctly
-      tag: s.tag,
-      tagColor: s.tagColor,
-      body: s.body,
-    }));
-
-    // Save as Video row
+    // ── PHASE 1 ONLY: save slide data to DB, return videoId ──
+    // The actual rendering (PNG + TTS + FFmpeg) happens in a SEPARATE
+    // request to /api/ai/rich-video/render so each request stays
+    // well under Railway's HTTP proxy timeout (~5 min).
     const video = await prisma.video.create({
       data: {
         courseId,
         title: parsed.deckTitle || topic.trim(),
         description:
           parsed.subtitle ||
-          `Rich ${totalSlides}-slide narrated video`,
-        url: getUploadUrl("videos", fileName),
+          `Rich ${parsed.slides.length}-slide narrated video (rendering…)`,
+        url: "pending",   // will be updated by Phase 2
         sourceType: "presentation",
-        fileName,
-        fileSize,
         lang,
-        slidesData: JSON.stringify(enrichedSlides),
+        slidesData: JSON.stringify({
+          deckTitle: parsed.deckTitle,
+          subtitle: parsed.subtitle,
+          slides: parsed.slides,
+          accentColor,
+          courseName,
+        }),
       },
     });
 
-    // Log TTS usage
-    const totalChars = parsed.slides.reduce(
-      (acc: number, s: Slide) => acc + (s.narration?.length || 0),
-      0
-    );
     await logUsage({
       userId: (session.user as any).id,
       courseId,
-      action: "narration",
-      ttsChars: totalChars,
+      action: "podcast_script",
+      inputText: systemPrompt.slice(0, 500),
+      outputText: raw.slice(0, 500),
     });
 
     return NextResponse.json({
-      video,
-      videoUrl: getUploadUrl("videos", fileName),
-      slideCount: totalSlides,
+      videoId: video.id,
+      slideCount: parsed.slides.length,
+      phase: "slides_ready",
     });
   } catch (e: any) {
     console.error("[rich-video] ERROR:", {
