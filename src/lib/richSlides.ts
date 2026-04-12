@@ -28,22 +28,22 @@ import type {
 const W = 1920;
 const H = 1080;
 
-// Colors — semi-transparent tints that look good on dark backgrounds
+// VIBRANT colors — bright and saturated for a punchy cinematic look on dark bg
 const COLORS: Record<SlideColor, { fg: string; bg: string; border: string }> = {
-  p: { fg: "#BBB4F7", bg: "#534AB7", border: "#AFA9EC" }, // purple
-  t: { fg: "#9FE1CB", bg: "#1D9E75", border: "#9FE1CB" }, // teal
-  c: { fg: "#F5C4B3", bg: "#D85A30", border: "#F5C4B3" }, // coral
-  a: { fg: "#FAC775", bg: "#BA7517", border: "#FAC775" }, // amber
-  b: { fg: "#B5D4F4", bg: "#378ADD", border: "#B5D4F4" }, // blue
-  g: { fg: "#C0DD97", bg: "#639922", border: "#C0DD97" }, // green
-  r: { fg: "#F5A5A5", bg: "#E24B4A", border: "#F5A5A5" }, // red
+  p: { fg: "#D4CFFF", bg: "#7B6EF6", border: "#B8B0FF" }, // vivid purple
+  t: { fg: "#6EEDC8", bg: "#22C993", border: "#6EEDC8" }, // vivid teal
+  c: { fg: "#FFAB91", bg: "#FF6E40", border: "#FFAB91" }, // vivid coral
+  a: { fg: "#FFD54F", bg: "#FFB300", border: "#FFD54F" }, // vivid amber/gold
+  b: { fg: "#90CAF9", bg: "#42A5F5", border: "#90CAF9" }, // vivid blue
+  g: { fg: "#A5D66F", bg: "#7CB342", border: "#A5D66F" }, // vivid green
+  r: { fg: "#FF8A80", bg: "#FF5252", border: "#FF8A80" }, // vivid red
 };
 
-const BG      = "#0B0D10";
-const CARD_BG = "#181B22";
-const TEXT    = "#E4DED4";
-const MUTED   = "#8A8275";
-const BORDER  = "#2B2F38";
+const BG      = "#0A0C12";  // deep dark blue-black
+const CARD_BG = "#161A24";  // slightly lighter card
+const TEXT    = "#FFFFFF";   // pure white for maximum readability
+const MUTED   = "#A8A0B4";  // lighter, cooler grey (was brownish)
+const BORDER  = "#2D3244";  // cool-toned border
 
 // ── XML escape ──
 function esc(s: string): string {
@@ -96,7 +96,7 @@ function renderSBox(box: SBoxItem, x: number, y: number, width: number, height: 
 
   let out = "";
   // Background fill (semi-transparent) + border
-  out += `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="14" fill="${color.bg}" fill-opacity="0.18" stroke="${color.bg}" stroke-opacity="0.55" stroke-width="2"/>\n`;
+  out += `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="14" fill="${color.bg}" fill-opacity="0.30" stroke="${color.bg}" stroke-opacity="0.80" stroke-width="2"/>\n`;
 
   // Title
   let cy = y + 42;
@@ -137,13 +137,13 @@ function renderQuote(c: { type: "quote"; text: string; color?: "p" | "t" | "a" }
   const h = 40 + maxLines * 38 + 30;
 
   let out = "";
-  // Background + left border
-  out += `<rect x="${PAD_X}" y="${y}" width="${BODY_W}" height="${h}" rx="12" fill="${col.bg}" fill-opacity="0.15"/>\n`;
-  out += `<rect x="${PAD_X}" y="${y}" width="7" height="${h}" fill="${col.bg}"/>\n`;
+  // Background + left border — more visible on dark bg
+  out += `<rect x="${PAD_X}" y="${y}" width="${BODY_W}" height="${h}" rx="12" fill="${col.bg}" fill-opacity="0.25"/>\n`;
+  out += `<rect x="${PAD_X}" y="${y}" width="8" height="${h}" fill="${col.fg}"/>\n`;
 
   let cy = y + 45;
   for (let i = 0; i < maxLines; i++) {
-    out += `<text x="${PAD_X + 28}" y="${cy}" fill="${col.fg}" font-size="26" font-style="italic" font-family="serif">${esc(lines[i])}</text>\n`;
+    out += `<text x="${PAD_X + 32}" y="${cy}" fill="${col.fg}" font-size="26" font-style="italic" font-family="serif">${esc(lines[i])}</text>\n`;
     cy += 38;
   }
   return { svg: out, height: h + 20 };
@@ -154,8 +154,9 @@ function renderFormula(c: { type: "formula"; text: string }, y: number): { svg: 
   const text = stripBold(c.text);
 
   let out = "";
-  out += `<rect x="${PAD_X}" y="${y}" width="${BODY_W}" height="${h}" rx="12" fill="${CARD_BG}" stroke="${BORDER}" stroke-width="1.5"/>\n`;
-  out += `<text x="${W / 2}" y="${y + h / 2 + 12}" text-anchor="middle" fill="${TEXT}" font-size="34" font-weight="bold" font-family="monospace">${esc(text)}</text>\n`;
+  // Formula panel with vivid blue accent border
+  out += `<rect x="${PAD_X}" y="${y}" width="${BODY_W}" height="${h}" rx="12" fill="${CARD_BG}" stroke="${COLORS.b.bg}" stroke-opacity="0.6" stroke-width="2"/>\n`;
+  out += `<text x="${W / 2}" y="${y + h / 2 + 12}" text-anchor="middle" fill="${COLORS.b.fg}" font-size="34" font-weight="bold" font-family="monospace">${esc(text)}</text>\n`;
   return { svg: out, height: h + 20 };
 }
 
@@ -165,8 +166,9 @@ function renderICard(c: { type: "icard"; title: string; body: string }, y: numbe
   const h = 50 + maxLines * 34 + 24;
 
   let out = "";
-  out += `<rect x="${PAD_X}" y="${y}" width="${BODY_W}" height="${h}" rx="12" fill="${CARD_BG}" stroke="${BORDER}" stroke-width="1.5"/>\n`;
-  out += `<text x="${PAD_X + 24}" y="${y + 32}" fill="${MUTED}" font-size="16" font-weight="bold" font-family="monospace" letter-spacing="2">${esc(c.title.toUpperCase())}</text>\n`;
+  // Card with amber accent border for examples/case studies
+  out += `<rect x="${PAD_X}" y="${y}" width="${BODY_W}" height="${h}" rx="12" fill="${CARD_BG}" stroke="${COLORS.a.bg}" stroke-opacity="0.5" stroke-width="2"/>\n`;
+  out += `<text x="${PAD_X + 24}" y="${y + 32}" fill="${COLORS.a.fg}" font-size="16" font-weight="bold" font-family="monospace" letter-spacing="2">${esc(c.title.toUpperCase())}</text>\n`;
 
   let cy = y + 66;
   for (let i = 0; i < maxLines; i++) {
@@ -188,10 +190,12 @@ function renderBullets(
     const col = COLORS[item.color || "p"];
     const lines = wrapText(item.text, 95);
     const maxLines = Math.min(lines.length, 3);
-    // Dot
-    out += `<circle cx="${PAD_X + 16}" cy="${cy + 2}" r="7" fill="${col.bg}"/>\n`;
+    // Colored dot
+    out += `<circle cx="${PAD_X + 16}" cy="${cy + 2}" r="8" fill="${col.fg}"/>\n`;
     for (let i = 0; i < maxLines; i++) {
-      out += `<text x="${PAD_X + 40}" y="${cy + i * 34}" fill="${TEXT}" font-size="24" font-family="sans-serif">${esc(lines[i])}</text>\n`;
+      // First line uses the accent color, remaining lines are white
+      const fill = i === 0 ? col.fg : TEXT;
+      out += `<text x="${PAD_X + 40}" y="${cy + i * 34}" fill="${fill}" font-size="24" font-family="sans-serif">${esc(lines[i])}</text>\n`;
     }
     cy += maxLines * 34 + 16;
   }
@@ -211,10 +215,10 @@ function renderTable(
   let out = "";
   out += `<rect x="${PAD_X}" y="${y}" width="${BODY_W}" height="${h}" rx="12" fill="${CARD_BG}" stroke="${BORDER}" stroke-width="1.5"/>\n`;
 
-  // Header row
+  // Header row — colored for visual pop
   for (let i = 0; i < cols; i++) {
     const hx = PAD_X + i * colW + 24;
-    out += `<text x="${hx}" y="${y + 40}" fill="${MUTED}" font-size="18" font-weight="bold" font-family="monospace" letter-spacing="1">${esc(stripBold(c.headers[i] || "").toUpperCase())}</text>\n`;
+    out += `<text x="${hx}" y="${y + 40}" fill="${COLORS.b.fg}" font-size="18" font-weight="bold" font-family="monospace" letter-spacing="1">${esc(stripBold(c.headers[i] || "").toUpperCase())}</text>\n`;
   }
   // Divider under header
   out += `<line x1="${PAD_X + 16}" y1="${y + rowH + 4}" x2="${PAD_X + BODY_W - 16}" y2="${y + rowH + 4}" stroke="${BORDER}" stroke-width="1"/>\n`;
@@ -579,10 +583,10 @@ export function buildRichSlideSvg(
     header += `<text x="${PAD_X}" y="70" fill="${tagColor.fg}" font-size="22" font-weight="bold" font-family="monospace" letter-spacing="3">${esc(tagText)}</text>\n`;
   }
 
-  // Title
+  // Title — uses the TAG accent color for vibrant headings
   let titleY = 130;
   for (let i = 0; i < maxTitleLines; i++) {
-    header += `<text x="${PAD_X}" y="${titleY}" fill="${TEXT}" font-size="56" font-weight="bold" font-family="serif">${esc(stripBold(titleLines[i]))}</text>\n`;
+    header += `<text x="${PAD_X}" y="${titleY}" fill="${tagColor.fg}" font-size="56" font-weight="bold" font-family="serif">${esc(stripBold(titleLines[i]))}</text>\n`;
     titleY += 70;
   }
 
@@ -603,14 +607,14 @@ export function buildRichSlideSvg(
 
   // ── Footer ──
   const footer =
-    `<text x="${PAD_X}" y="1040" fill="${MUTED}" font-size="22" font-family="sans-serif">${esc(courseName)}</text>\n` +
-    `<text x="${W - PAD_X}" y="1040" text-anchor="end" fill="${MUTED}" font-size="22" font-family="sans-serif">${slideIndex + 1} / ${totalSlides}</text>\n`;
+    `<text x="${PAD_X}" y="1040" fill="${COLORS.p.fg}" fill-opacity="0.5" font-size="22" font-family="sans-serif">${esc(courseName)}</text>\n` +
+    `<text x="${W - PAD_X}" y="1040" text-anchor="end" fill="${COLORS.p.fg}" fill-opacity="0.5" font-size="22" font-family="sans-serif">${slideIndex + 1} / ${totalSlides}</text>\n`;
 
-  // Progress bar
+  // Progress bar — vivid accent color, thicker
   const progressW = totalSlides > 1 ? ((slideIndex + 1) / totalSlides) * W : W;
   const progress =
-    `<rect x="0" y="${H - 5}" width="${progressW}" height="5" fill="${accentColor}" fill-opacity="0.7"/>\n` +
-    `<rect x="${progressW}" y="${H - 5}" width="${W - progressW}" height="5" fill="#1A1D24"/>\n`;
+    `<rect x="0" y="${H - 6}" width="${progressW}" height="6" fill="${tagColor.fg}"/>\n` +
+    `<rect x="${progressW}" y="${H - 6}" width="${W - progressW}" height="6" fill="#12151D"/>\n`;
 
   return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
   <rect width="${W}" height="${H}" fill="${BG}"/>
