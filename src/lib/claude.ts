@@ -29,21 +29,34 @@ function getClient(): Anthropic {
   return _client;
 }
 
+const MODEL = "claude-sonnet-4-5-20250929";
+
+// Anthropic SDK refuses non-streaming requests whose max_tokens implies
+// the response could take longer than 10 minutes. Streaming is required
+// for large outputs, so we always stream and collect the result.
 export async function askClaude(
   system: string,
   userMessage: string,
   maxTokens = 4096
 ): Promise<string> {
-  const response = await getClient().messages.create({
-    model: "claude-sonnet-4-6",
+  const stream = await getClient().messages.create({
+    model: MODEL,
     max_tokens: maxTokens,
     system,
     messages: [{ role: "user", content: userMessage }],
+    stream: true,
   });
 
-  return response.content
-    .map((block) => (block.type === "text" ? block.text : ""))
-    .join("");
+  let text = "";
+  for await (const event of stream) {
+    if (
+      event.type === "content_block_delta" &&
+      event.delta.type === "text_delta"
+    ) {
+      text += event.delta.text;
+    }
+  }
+  return text;
 }
 
 type ImageContentBlock = {
@@ -62,19 +75,28 @@ export type ClaudeMessage = {
 };
 
 // Multi-turn chat with conversation history (supports vision content blocks)
+// Uses streaming for compatibility with large max_tokens values.
 export async function askClaudeChat(
   system: string,
   messages: ClaudeMessage[],
   maxTokens = 4096
 ): Promise<string> {
-  const response = await getClient().messages.create({
-    model: "claude-sonnet-4-6",
+  const stream = await getClient().messages.create({
+    model: MODEL,
     max_tokens: maxTokens,
     system,
     messages: messages as any,
+    stream: true,
   });
 
-  return response.content
-    .map((block) => (block.type === "text" ? block.text : ""))
-    .join("");
+  let text = "";
+  for await (const event of stream) {
+    if (
+      event.type === "content_block_delta" &&
+      event.delta.type === "text_delta"
+    ) {
+      text += event.delta.text;
+    }
+  }
+  return text;
 }
