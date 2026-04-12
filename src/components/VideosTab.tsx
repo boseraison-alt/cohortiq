@@ -690,12 +690,16 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
 
   // Generate a rich narrated video using internal pipeline:
   //   Claude → rich SVG slides → resvg-js PNG → OpenAI "onyx" TTS → FFmpeg MP4
+  // [v3] — always logs full diagnostic to console so we can see what the
+  // server returned even when the banner shows a terse message.
   const generateRichVideo = async () => {
     if (!topic.trim() || richBusy) return;
     setRichBusy(true);
     setRichError("");
     setRichStatus("Writing rich slides with Claude...");
+    console.log("[rich-video client v3] starting", { topic: topic.trim(), numSlides: richNumSlides });
     try {
+      const startedAt = Date.now();
       const res = await fetch("/api/ai/rich-video", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -706,33 +710,38 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
           lang,
         }),
       });
+      const elapsedMs = Date.now() - startedAt;
       const text = await res.text();
+      console.log("[rich-video client v3] response", {
+        status: res.status,
+        statusText: res.statusText,
+        elapsedMs,
+        bodyLength: text.length,
+        bodyPreview: text.slice(0, 500),
+      });
 
       // Try to parse as JSON and extract a usable error message from any field
       let data: any = null;
       try { data = JSON.parse(text); } catch {}
 
       if (!res.ok) {
-        // Prefer a specific message from the server body, otherwise surface
-        // the HTTP status + a snippet of the raw body so we can diagnose.
         const serverMsg =
           data?.error || data?.message || data?.detail || data?.err || "";
         const bodySnippet = text?.slice(0, 300) || "";
         const statusHint =
           res.status === 503 ? "Server temporarily unavailable" :
-          res.status === 504 ? "Gateway timeout (generation took too long)" :
+          res.status === 504 ? `Gateway timeout after ${Math.round(elapsedMs / 1000)}s` :
           res.status === 502 ? "Bad gateway (server restarted)" :
           res.status >= 500 ? `Server error ${res.status}` :
           res.status === 401 ? "Unauthorized — please sign in again" :
           `HTTP ${res.status}`;
         throw new Error(
-          serverMsg ||
-          `${statusHint}${bodySnippet ? ` — ${bodySnippet}` : ""}`
+          `[${res.status}] ${serverMsg || statusHint}${!serverMsg && bodySnippet ? ` — ${bodySnippet}` : ""}`
         );
       }
 
       if (!data) {
-        throw new Error("Server returned non-JSON response");
+        throw new Error(`Server returned non-JSON response (${text.length} bytes): ${text.slice(0, 200)}`);
       }
 
       // Refresh library and focus the new video
@@ -742,6 +751,7 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
         setTopic("");
       }
     } catch (e: any) {
+      console.error("[rich-video client v3] error:", e);
       setRichError(e.message || "Failed to generate rich video");
     }
     setRichBusy(false);
