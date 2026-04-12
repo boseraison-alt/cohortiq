@@ -101,10 +101,10 @@ export async function compositeVideo(
 
       const filters: string[] = ["scale=1920:1080"];
       if (cinematic) {
-        // Subtle vignette: darker corners, lighter center.
-        // angle = PI/5 → ~36° cone; keeps the look subtle.
-        filters.push("vignette=angle=PI/5");
-        // Color grade: slight contrast + saturation boost + gentle gamma.
+        // Simple color grade: slight contrast + saturation boost + gentle gamma.
+        // Uses only the `eq` filter which is in the FFmpeg core set and works
+        // reliably across all ffmpeg-static builds. No vignette (the PI/5
+        // expression isn't supported by every filter expression evaluator).
         filters.push("eq=contrast=1.08:saturation=1.12:gamma=0.98");
       }
       filters.push(`fade=t=in:st=0:d=${openFade}`);

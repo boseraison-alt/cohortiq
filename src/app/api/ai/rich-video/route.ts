@@ -327,26 +327,67 @@ ${context || "No materials loaded — use general knowledge of the topic."}${lan
     for (let i = 0; i < totalSlides; i++) {
       const slide = parsed.slides[i];
 
-      // Render SVG → PNG using existing resvg-js pipeline
-      const svg = buildRichSlideSvg(slide, i, totalSlides, accentColor, courseName);
-      const png = await renderSlideToPng(svg);
-
-      // Generate TTS audio with the SAME "onyx" voice used by existing videos
-      const narrationText = slide.narration ||
-        `${slide.title}. ${(slide.body || []).map((c: any) =>
-          c.type === "bullets" ? c.items?.map((i: any) => i.text).join(". ") :
-          c.type === "quote" ? c.text :
-          c.type === "sbox" ? `${c.box?.title}. ${c.box?.body}` :
-          c.type === "formula" ? c.text : ""
-        ).join(". ")}`;
-
-      const chunks = splitIntoChunks(narrationText, 4000);
-      const audioBuffers: Buffer[] = [];
-      for (const chunk of chunks) {
-        const buf = await generateSpeech(chunk, "onyx");
-        audioBuffers.push(buf);
+      // Step 1: Build SVG
+      let svg: string;
+      try {
+        svg = buildRichSlideSvg(slide, i, totalSlides, accentColor, courseName);
+      } catch (stepErr: any) {
+        throw new Error(
+          `Slide ${i + 1}/${totalSlides} SVG build failed: ${stepErr?.message || stepErr}. Slide title: "${slide?.title || "unknown"}"`
+        );
       }
-      const mp3 = Buffer.concat(audioBuffers);
+
+      // Step 2: Render SVG → PNG
+      let png: Buffer;
+      try {
+        png = await renderSlideToPng(svg);
+      } catch (stepErr: any) {
+        throw new Error(
+          `Slide ${i + 1}/${totalSlides} PNG render failed: ${stepErr?.message || stepErr}`
+        );
+      }
+
+      // Step 3: Build narration text (fall back to slide content if no narration)
+      const narrationText =
+        slide.narration ||
+        `${slide.title}. ${(slide.body || [])
+          .map((c: any) =>
+            c.type === "bullets"
+              ? c.items?.map((it: any) => it.text).join(". ")
+              : c.type === "quote"
+              ? c.text
+              : c.type === "sbox"
+              ? `${c.box?.title}. ${c.box?.body}`
+              : c.type === "formula"
+              ? c.text
+              : c.type === "icard"
+              ? `${c.title}. ${c.body}`
+              : ""
+          )
+          .filter(Boolean)
+          .join(". ")}`;
+
+      if (!narrationText.trim()) {
+        throw new Error(
+          `Slide ${i + 1}/${totalSlides} has empty narration (and empty body components to fall back to).`
+        );
+      }
+
+      // Step 4: TTS
+      let mp3: Buffer;
+      try {
+        const textChunks = splitIntoChunks(narrationText, 4000);
+        const audioBuffers: Buffer[] = [];
+        for (const chunk of textChunks) {
+          const buf = await generateSpeech(chunk, "onyx");
+          audioBuffers.push(buf);
+        }
+        mp3 = Buffer.concat(audioBuffers);
+      } catch (stepErr: any) {
+        throw new Error(
+          `Slide ${i + 1}/${totalSlides} TTS failed: ${stepErr?.message || stepErr}`
+        );
+      }
 
       slideMedia.push({ png, mp3 });
       console.log(`[rich-video] Rendered slide ${i + 1}/${totalSlides}`);
@@ -363,9 +404,17 @@ ${context || "No materials loaded — use general knowledge of the topic."}${lan
     const fileName = `rich_${safeTopic}_${Date.now()}.mp4`;
     const outputPath = path.join(uploadDir, fileName);
 
-    const { fileSize, slideDurations } = await compositeVideo(slideMedia, outputPath, {
-      cinematic: true,
-    });
+    let fileSize: number;
+    let slideDurations: number[];
+    try {
+      const result = await compositeVideo(slideMedia, outputPath, { cinematic: true });
+      fileSize = result.fileSize;
+      slideDurations = result.slideDurations;
+    } catch (stepErr: any) {
+      throw new Error(
+        `FFmpeg composition failed: ${stepErr?.message || stepErr}`
+      );
+    }
 
     // Build enriched slide data — include both rich components and legacy fields
     // so the existing AnnotatedVideoPlayer can still render the right-side panel.
