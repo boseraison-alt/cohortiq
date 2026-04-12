@@ -707,15 +707,33 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
         }),
       });
       const text = await res.text();
-      let data: any;
-      try { data = JSON.parse(text); } catch {
+
+      // Try to parse as JSON and extract a usable error message from any field
+      let data: any = null;
+      try { data = JSON.parse(text); } catch {}
+
+      if (!res.ok) {
+        // Prefer a specific message from the server body, otherwise surface
+        // the HTTP status + a snippet of the raw body so we can diagnose.
+        const serverMsg =
+          data?.error || data?.message || data?.detail || data?.err || "";
+        const bodySnippet = text?.slice(0, 300) || "";
+        const statusHint =
+          res.status === 503 ? "Server temporarily unavailable" :
+          res.status === 504 ? "Gateway timeout (generation took too long)" :
+          res.status === 502 ? "Bad gateway (server restarted)" :
+          res.status >= 500 ? `Server error ${res.status}` :
+          res.status === 401 ? "Unauthorized — please sign in again" :
+          `HTTP ${res.status}`;
         throw new Error(
-          res.status === 503 ? "Server temporarily unavailable. Try again in a minute." :
-          res.status >= 500 ? `Server error (${res.status})` :
-          text.slice(0, 200)
+          serverMsg ||
+          `${statusHint}${bodySnippet ? ` — ${bodySnippet}` : ""}`
         );
       }
-      if (!res.ok) throw new Error(data.error || "Rich video generation failed");
+
+      if (!data) {
+        throw new Error("Server returned non-JSON response");
+      }
 
       // Refresh library and focus the new video
       await loadVideos();
