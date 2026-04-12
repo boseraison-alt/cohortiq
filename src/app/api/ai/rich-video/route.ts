@@ -280,10 +280,19 @@ OTHER RULES
 COURSE MATERIALS:
 ${context || "No materials loaded — use general knowledge of the topic."}${langInstruction}`;
 
+    // 8192 is safely under Anthropic's 10-minute streaming threshold and
+    // plenty for ~8 short rich slides. Only bump this if we observe
+    // truncation on a specific slide count.
+    const maxClaudeTokens = slideCount <= 8 ? 8192 : 16000;
+    console.log(`[rich-video] Calling Claude (max_tokens=${maxClaudeTokens})`);
+    const claudeStart = Date.now();
     const raw = await askClaude(
       systemPrompt,
       `Generate the ${slideCount}-slide rich narrated presentation on: "${topic.trim()}"`,
-      32000  // give Claude plenty of headroom — prior 16K was truncating
+      maxClaudeTokens
+    );
+    console.log(
+      `[rich-video] Claude done in ${Math.round((Date.now() - claudeStart) / 1000)}s, output chars=${raw?.length || 0}`
     );
 
     console.log("[rich-video] Claude responded", {
@@ -320,40 +329,52 @@ ${context || "No materials loaded — use general knowledge of the topic."}${lan
       deckTitle: parsed.deckTitle,
     });
 
-    // ── Render all slides in PARALLEL (PNG + TTS) ──
-    //
-    // The old serial loop was the dominant bottleneck — 12 slides × ~5s
-    // TTS each was burning 60+ seconds alone. Running them all at once
-    // (Promise.all) cuts the slide stage down to roughly the time of a
-    // single slide, at the cost of a brief burst of OpenAI TTS requests
-    // (well within typical rate limits for 12–18 slides).
+    // ── Phase 1: Render all slides to PNG (SERIAL — avoids resvg-js memory spikes) ──
+    // resvg-js can allocate a lot of memory per render; running many in parallel
+    // on Railway's limited containers has caused OOM crashes (502s). Serial is
+    // plenty fast — each slide renders in under a second.
     const totalSlides = parsed.slides.length;
-    console.log(`[rich-video] Rendering ${totalSlides} slides in parallel`);
-    const renderStart = Date.now();
+    console.log(`[rich-video] Phase 1: rendering ${totalSlides} PNG slides serially`);
+    const phase1Start = Date.now();
+    const pngs: Buffer[] = [];
+    for (let i = 0; i < totalSlides; i++) {
+      const slide = parsed.slides[i];
+      let svg: string;
+      try {
+        svg = buildRichSlideSvg(slide, i, totalSlides, accentColor, courseName);
+      } catch (stepErr: any) {
+        throw new Error(
+          `Slide ${i + 1}/${totalSlides} SVG build failed: ${stepErr?.message || stepErr}. Slide title: "${slide?.title || "unknown"}"`
+        );
+      }
+      try {
+        pngs.push(await renderSlideToPng(svg));
+      } catch (stepErr: any) {
+        throw new Error(
+          `Slide ${i + 1}/${totalSlides} PNG render failed: ${stepErr?.message || stepErr}`
+        );
+      }
+    }
+    console.log(
+      `[rich-video] Phase 1 done in ${Math.round((Date.now() - phase1Start) / 1000)}s`
+    );
 
-    const slideMedia = await Promise.all(
-      parsed.slides.map(async (slide: Slide, i: number) => {
-        // Step 1: Build SVG
-        let svg: string;
-        try {
-          svg = buildRichSlideSvg(slide, i, totalSlides, accentColor, courseName);
-        } catch (stepErr: any) {
-          throw new Error(
-            `Slide ${i + 1}/${totalSlides} SVG build failed: ${stepErr?.message || stepErr}. Slide title: "${slide?.title || "unknown"}"`
-          );
-        }
+    // ── Phase 2: Generate TTS audio (CONCURRENCY-LIMITED to 3) ──
+    // OpenAI TTS can be slow (~3-5s per request) so parallelism helps,
+    // but 8 simultaneous requests exhausts Node's default HTTP agent
+    // socket pool on some environments. Limit to 3 concurrent.
+    console.log(`[rich-video] Phase 2: generating TTS with concurrency=3`);
+    const phase2Start = Date.now();
+    const mp3s: Buffer[] = new Array(totalSlides);
+    const CONCURRENCY = 3;
+    let nextIdx = 0;
 
-        // Step 2: Render SVG → PNG
-        let png: Buffer;
-        try {
-          png = await renderSlideToPng(svg);
-        } catch (stepErr: any) {
-          throw new Error(
-            `Slide ${i + 1}/${totalSlides} PNG render failed: ${stepErr?.message || stepErr}`
-          );
-        }
+    const workers = Array.from({ length: Math.min(CONCURRENCY, totalSlides) }, async () => {
+      while (true) {
+        const i = nextIdx++;
+        if (i >= totalSlides) return;
+        const slide = parsed.slides[i];
 
-        // Step 3: Build narration text (fall back to body components if empty)
         const narrationText =
           slide.narration ||
           `${slide.title}. ${(slide.body || [])
@@ -375,33 +396,31 @@ ${context || "No materials loaded — use general knowledge of the topic."}${lan
 
         if (!narrationText.trim()) {
           throw new Error(
-            `Slide ${i + 1}/${totalSlides} has empty narration (and empty body components to fall back to).`
+            `Slide ${i + 1}/${totalSlides} has empty narration.`
           );
         }
 
-        // Step 4: TTS
-        let mp3: Buffer;
         try {
           const textChunks = splitIntoChunks(narrationText, 4000);
           const audioBuffers: Buffer[] = [];
           for (const chunk of textChunks) {
-            const buf = await generateSpeech(chunk, "onyx");
-            audioBuffers.push(buf);
+            audioBuffers.push(await generateSpeech(chunk, "onyx"));
           }
-          mp3 = Buffer.concat(audioBuffers);
+          mp3s[i] = Buffer.concat(audioBuffers);
         } catch (stepErr: any) {
           throw new Error(
             `Slide ${i + 1}/${totalSlides} TTS failed: ${stepErr?.message || stepErr}`
           );
         }
+      }
+    });
 
-        return { png, mp3 };
-      })
-    );
-
+    await Promise.all(workers);
     console.log(
-      `[rich-video] All ${totalSlides} slides rendered in ${Math.round((Date.now() - renderStart) / 1000)}s`
+      `[rich-video] Phase 2 done in ${Math.round((Date.now() - phase2Start) / 1000)}s`
     );
+
+    const slideMedia = pngs.map((png, i) => ({ png, mp3: mp3s[i] }));
 
     // ── Composite into MP4 ──
     const uploadDir = getUploadDir("videos");
