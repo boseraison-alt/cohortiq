@@ -7,6 +7,7 @@ import { buildContext } from "@/lib/chunks";
 import { logUsage } from "@/lib/usage";
 import { getUserPrefsPrompt } from "@/lib/preferences";
 import { recoverDeckJson } from "@/lib/jsonRecovery";
+import { renderVideoInBackground } from "@/lib/richVideoRenderer";
 import type { Slide } from "@/lib/slideDeckTemplate";
 
 export const dynamic = "force-dynamic";
@@ -406,10 +407,18 @@ ${context || "No materials loaded — use general knowledge of the topic."}${lan
       outputText: raw.slice(0, 500),
     });
 
+    // ── Fire-and-forget background rendering ──
+    // The HTTP response returns NOW. Rendering (PNG + TTS + FFmpeg) runs
+    // in the background on the Node.js process. The client polls
+    // /api/ai/rich-video/status?videoId=X until url changes from "pending".
+    renderVideoInBackground(video.id, (session.user as any).id).catch((err) => {
+      console.error("[rich-video] Background render promise rejected:", err?.message);
+    });
+
     return NextResponse.json({
       videoId: video.id,
       slideCount: parsed.slides.length,
-      phase: "slides_ready",
+      phase: "rendering",
     });
   } catch (e: any) {
     console.error("[rich-video] ERROR:", {

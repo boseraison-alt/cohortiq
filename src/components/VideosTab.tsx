@@ -724,28 +724,57 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
         return data;
       };
 
-      // ── PHASE 1: Generate slides with Claude → save to DB ──
+      // ── PHASE 1: Generate slides with Claude → save to DB + start background render ──
       const phase1 = await callPhase(
         "/api/ai/rich-video",
         { courseId, topic: topic.trim(), numSlides: richNumSlides, lang },
-        `Phase 1: Writing ${richNumSlides} rich slides with Claude…`
+        `Writing ${richNumSlides} rich slides with Claude…`
       );
-      console.log("[rich-video client v4] Phase 1 done", phase1);
+      console.log("[rich-video client v5] Phase 1 done", phase1);
 
-      // ── PHASE 2: Render PNG + TTS + FFmpeg → final MP4 ──
-      const phase2 = await callPhase(
-        "/api/ai/rich-video/render",
-        { videoId: phase1.videoId },
-        `Phase 2: Rendering ${phase1.slideCount} slides (narration + video)…`
-      );
-      console.log("[rich-video client v4] Phase 2 done", phase2);
+      // ── PHASE 2: Poll for background render completion ──
+      // The server is rendering in the background. We poll every 5 seconds
+      // until url changes from "pending" to the real MP4 path.
+      setRichStatus(`Rendering ${phase1.slideCount} slides (narration + video)… this takes 1–3 min`);
+      const videoId = phase1.videoId;
+      const maxPollTime = 10 * 60 * 1000; // 10 min max
+      const pollInterval = 5000; // 5 seconds
+      const pollStart = Date.now();
 
-      // Refresh library and focus the new video
-      await loadVideos();
-      if (phase2.video) {
-        setActiveVideo(phase2.video);
-        setTopic("");
+      while (Date.now() - pollStart < maxPollTime) {
+        await new Promise((r) => setTimeout(r, pollInterval));
+        const elapsed = Math.round((Date.now() - pollStart) / 1000);
+        setRichStatus(`Rendering… ${elapsed}s elapsed`);
+
+        try {
+          const statusRes = await fetch(`/api/ai/rich-video/status?videoId=${videoId}`);
+          const statusData = await statusRes.json();
+
+          if (statusData.status === "complete") {
+            console.log("[rich-video client v5] Render complete", statusData.video?.url);
+            await loadVideos();
+            if (statusData.video) {
+              setActiveVideo(statusData.video);
+              setTopic("");
+            }
+            setRichBusy(false);
+            setRichStatus("");
+            return; // success — exit early
+          }
+
+          if (statusData.status === "error") {
+            throw new Error(statusData.error || "Rendering failed");
+          }
+
+          // status === "rendering" — keep polling
+        } catch (pollErr: any) {
+          if (pollErr?.message?.includes("Rendering failed")) throw pollErr;
+          // Network glitch during poll — just retry
+          console.warn("[rich-video client v5] Poll error, retrying:", pollErr?.message);
+        }
       }
+
+      throw new Error("Rendering timed out after 10 minutes. Check your video library — it may still appear shortly.");
     } catch (e: any) {
       console.error("[rich-video client v3] error:", e);
       setRichError(e.message || "Failed to generate rich video");
