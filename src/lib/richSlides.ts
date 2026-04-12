@@ -87,30 +87,43 @@ const BODY_H = BODY_END_Y - BODY_START_Y; // 760
 
 // ── Component renderers (each returns SVG string + height consumed) ──
 
+let _clipId = 0;
+
 function renderSBox(box: SBoxItem, x: number, y: number, width: number, height: number): string {
   const color = COLORS[box.color] || COLORS.p;
-  const titleLines = wrapText(box.title, Math.floor(width / 14));
-  const bodyLines = wrapText(box.body, Math.floor(width / 11));
+  // Conservative char budgets to prevent overflow (DejaVu Sans is ~14px wide at 26px font, ~12px at 20px)
+  const innerW = width - 48; // 24px padding each side
+  const titleChars = Math.floor(innerW / 16);
+  const bodyChars = Math.floor(innerW / 12);
+  const titleLines = wrapText(box.title, titleChars);
+  const bodyLines = wrapText(box.body, bodyChars);
   const maxTitleLines = Math.min(titleLines.length, 2);
-  const maxBodyLines = Math.min(bodyLines.length, Math.floor((height - 60) / 32));
+  const maxBodyLines = Math.min(bodyLines.length, Math.floor((height - 70) / 28));
+
+  const clipName = `sbox-clip-${_clipId++}`;
 
   let out = "";
+  // Clip path to prevent any overflow
+  out += `<defs><clipPath id="${clipName}"><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="14"/></clipPath></defs>\n`;
+  out += `<g clip-path="url(#${clipName})">\n`;
+
   // Background fill (semi-transparent) + border
   out += `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="14" fill="${color.bg}" fill-opacity="0.22" stroke="${color.bg}" stroke-opacity="0.65" stroke-width="2"/>\n`;
 
   // Title
-  let cy = y + 42;
+  let cy = y + 38;
   for (let i = 0; i < maxTitleLines; i++) {
-    out += `<text x="${x + 24}" y="${cy}" fill="${color.fg}" font-size="26" font-weight="bold" font-family="sans-serif">${esc(titleLines[i])}</text>\n`;
-    cy += 32;
+    out += `<text x="${x + 24}" y="${cy}" fill="${color.fg}" font-size="24" font-weight="bold" font-family="sans-serif">${esc(titleLines[i])}</text>\n`;
+    cy += 30;
   }
-  cy += 8;
+  cy += 6;
 
-  // Body
+  // Body (slightly smaller font for better fit)
   for (let i = 0; i < maxBodyLines; i++) {
-    out += `<text x="${x + 24}" y="${cy}" fill="${TEXT}" font-size="22" font-family="sans-serif">${esc(bodyLines[i])}</text>\n`;
-    cy += 32;
+    out += `<text x="${x + 24}" y="${cy}" fill="${TEXT}" font-size="20" font-family="sans-serif">${esc(bodyLines[i])}</text>\n`;
+    cy += 28;
   }
+  out += `</g>\n`;
   return out;
 }
 
@@ -132,7 +145,7 @@ function renderGrid(c: { type: "grid2" | "grid3"; boxes: SBoxItem[] }, y: number
 
 function renderQuote(c: { type: "quote"; text: string; color?: "p" | "t" | "a" }, y: number): { svg: string; height: number } {
   const col = COLORS[(c.color || "p") as SlideColor];
-  const lines = wrapText(c.text, 110);
+  const lines = wrapText(c.text, 85); // was 110 — too wide for 26px font
   const maxLines = Math.min(lines.length, 4);
   const h = 40 + maxLines * 38 + 30;
 
@@ -161,7 +174,7 @@ function renderFormula(c: { type: "formula"; text: string }, y: number): { svg: 
 }
 
 function renderICard(c: { type: "icard"; title: string; body: string }, y: number): { svg: string; height: number } {
-  const lines = wrapText(c.body, 110);
+  const lines = wrapText(c.body, 85); // was 110
   const maxLines = Math.min(lines.length, 5);
   const h = 50 + maxLines * 34 + 24;
 
@@ -188,7 +201,7 @@ function renderBullets(
 
   for (const item of items) {
     const col = COLORS[item.color || "p"];
-    const lines = wrapText(item.text, 95);
+    const lines = wrapText(item.text, 75); // was 95
     const maxLines = Math.min(lines.length, 3);
     // Colored dot
     out += `<circle cx="${PAD_X + 16}" cy="${cy + 2}" r="8" fill="${col.fg}"/>\n`;
@@ -572,7 +585,7 @@ export function buildRichSlideSvg(
 
   // ── Title area ──
   const tagText = slide.tag ? slide.tag.toUpperCase() : "";
-  const titleLines = wrapText(slide.title, 46);
+  const titleLines = wrapText(slide.title, 38); // was 46 — safer at 56px font
   const maxTitleLines = Math.min(titleLines.length, 2);
 
   // Accent top bar
