@@ -83,3 +83,20 @@ export async function PATCH(req: NextRequest, { params }: { params: { mid: strin
     return NextResponse.json({ ok: true, status: "rejected" });
   }
 }
+
+// DELETE: permanently remove a material and its chunks
+export async function DELETE(req: NextRequest, { params }: { params: { mid: string } }) {
+  const session = await getServerSession(authOptions);
+  if (!(await requireAdmin(session))) {
+    return NextResponse.json({ error: "Admin only" }, { status: 403 });
+  }
+
+  const material = await prisma.material.findUnique({ where: { id: params.mid } });
+  if (!material) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Delete chunks first (foreign key dependency)
+  await prisma.chunk.deleteMany({ where: { materialId: params.mid } });
+  await prisma.material.delete({ where: { id: params.mid } });
+
+  return NextResponse.json({ ok: true, deleted: params.mid });
+}

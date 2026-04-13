@@ -1117,6 +1117,18 @@ function MaterialApproval() {
     setProcessing(null); load();
   };
 
+  const deleteMaterial = async (mid: string, title: string) => {
+    if (!confirm(`Permanently delete "${title}"?\n\nThis removes the material and all its chunks. This cannot be undone.`)) return;
+    setProcessing(mid);
+    const res = await fetch(`/api/admin/materials/${mid}`, { method: "DELETE" });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      alert("Delete failed: " + (d.error || "Unknown error"));
+    }
+    setProcessing(null);
+    load();
+  };
+
   return (
     <div>
       <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
@@ -1149,13 +1161,20 @@ function MaterialApproval() {
             <button onClick={() => viewFull(m.id)} style={{ fontSize: ".72rem", color: A.muted, background: "none", border: "none", cursor: "pointer" }}>
               {expanded === m.id ? "Collapse" : "View full"}
             </button>
+            <div style={{ flex: 1 }} />
             {m.status === "pending" && (
               <>
-                <div style={{ flex: 1 }} />
                 <Btn label="Reject" bg={A.redBg} color={A.red} border={`1px solid ${A.red}20`} onClick={() => handleAction(m.id, "reject")} />
                 <Btn label={processing === m.id ? "Processing…" : "Approve & Chunk"} bg={A.green} color="white" border="none" onClick={() => handleAction(m.id, "approve")} />
               </>
             )}
+            <Btn
+              label={processing === m.id ? "Deleting…" : "🗑 Delete"}
+              bg="transparent"
+              color={A.red}
+              border={`1px solid ${A.red}20`}
+              onClick={() => deleteMaterial(m.id, m.title)}
+            />
           </div>
         </Card>
       ))}
