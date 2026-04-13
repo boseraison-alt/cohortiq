@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const userId = (session.user as any).id;
 
-  const { courseId, duration, customContext, style = "conversation", topic, lang = "en" } = await req.json();
+  const { courseId, duration, customContext, style = "conversation", topic, lang = "en", materialIds } = await req.json();
 
   const LANG_NAMES: Record<string, string> = {
     en: "English",
@@ -32,13 +32,17 @@ export async function POST(req: NextRequest) {
   let baseContext = customContext as string | null;
 
   if (!baseContext) {
+    const chunkWhere: any = { courseId };
+    if (materialIds?.length) {
+      chunkWhere.materialId = { in: materialIds };
+    }
     const chunks = await prisma.chunk.findMany({
-      where: { courseId },
+      where: chunkWhere,
       select: { title: true, text: true, chunkIndex: true },
       orderBy: { chunkIndex: "asc" },
     });
 
-    if (!chunks.length) return NextResponse.json({ error: "No materials found" }, { status: 400 });
+    if (!chunks.length) return NextResponse.json({ error: "No materials found for selected sources" }, { status: 400 });
     baseContext = buildContext(chunks.slice(0, 30));
   }
 

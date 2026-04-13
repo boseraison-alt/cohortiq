@@ -36,6 +36,7 @@ interface GenerateParams {
   topic: string;
   slideCount: number;
   lang: string;
+  materialIds?: string[];
 }
 
 /**
@@ -43,7 +44,7 @@ interface GenerateParams {
  * Runs in background (fire-and-forget from the route handler).
  */
 export async function generateRichVideoFull(params: GenerateParams): Promise<void> {
-  const { videoId, userId, courseId, topic, slideCount, lang } = params;
+  const { videoId, userId, courseId, topic, slideCount, lang, materialIds } = params;
 
   try {
     console.log(`[bg-gen] Starting full generation for ${videoId}: "${topic}" (${slideCount} slides)`);
@@ -56,8 +57,12 @@ export async function generateRichVideoFull(params: GenerateParams): Promise<voi
     const courseName = course?.name || "Course";
     const accentColor = course?.color || "#C9956B";
 
+    const chunkWhere: any = { courseId };
+    if (materialIds?.length) {
+      chunkWhere.materialId = { in: materialIds };
+    }
     const chunks = await prisma.chunk.findMany({
-      where: { courseId },
+      where: chunkWhere,
       select: { title: true, text: true, chunkIndex: true },
       orderBy: { chunkIndex: "asc" },
       take: 30,

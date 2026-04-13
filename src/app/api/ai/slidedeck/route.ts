@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { courseId, topic, numSlides = 25, lang = "en" } = await req.json();
+    const { courseId, topic, numSlides = 25, lang = "en", materialIds } = await req.json();
     if (!courseId || !topic?.trim()) {
       return NextResponse.json(
         { error: "courseId and topic are required" },
@@ -48,8 +48,12 @@ export async function POST(req: NextRequest) {
 
     // Pull course chunks as context (cap at 30 — Claude's prompt instructions
     // need to fit alongside these without truncation)
+    const chunkWhere: any = { courseId };
+    if (materialIds?.length) {
+      chunkWhere.materialId = { in: materialIds };
+    }
     const chunks = await prisma.chunk.findMany({
-      where: { courseId },
+      where: chunkWhere,
       select: { title: true, text: true, chunkIndex: true },
       orderBy: { chunkIndex: "asc" },
       take: 30,

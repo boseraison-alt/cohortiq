@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { courseId, topic, numSlides = 8, lang = "en" } = await req.json();
+    const { courseId, topic, numSlides = 8, lang = "en", materialIds } = await req.json();
     if (!courseId || !topic?.trim()) {
       return NextResponse.json(
         { error: "courseId and topic are required" },
@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
       topic: topic.trim(),
       slideCount,
       lang,
+      materialIds: materialIds?.length ? materialIds : undefined,
     }).catch((err) => {
       console.error("[rich-video] Background generation failed:", err?.message);
     });

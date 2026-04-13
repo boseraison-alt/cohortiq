@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { t, type Lang } from "@/lib/i18n";
 import ThumbsRating from "@/components/ThumbsRating";
+import SourcePicker from "@/components/SourcePicker";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -555,6 +556,9 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
   const [slides, setSlides] = useState<SlideData[]>([]);
   const [genVideo, setGenVideo] = useState<Video | null>(null);
 
+  // ── Source material selection (shared by all generators) ──
+  const [materialIds, setMaterialIds] = useState<string[]>([]);
+
   // ── Rich HTML slide deck generation ──
   const [deckBusy, setDeckBusy] = useState(false);
   const [deckError, setDeckError] = useState("");
@@ -658,6 +662,7 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
           topic: topic.trim(),
           numSlides: deckNumSlides,
           lang,
+          materialIds,
         }),
       });
       const text = await res.text();
@@ -727,7 +732,7 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
       // ── PHASE 1: Generate slides with Claude → save to DB + start background render ──
       const phase1 = await callPhase(
         "/api/ai/rich-video",
-        { courseId, topic: topic.trim(), numSlides: richNumSlides, lang },
+        { courseId, topic: topic.trim(), numSlides: richNumSlides, lang, materialIds },
         `Writing ${richNumSlides} rich slides with Claude…`
       );
       console.log("[rich-video client v5] Phase 1 done", phase1);
@@ -814,7 +819,7 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
       const slidesRes = await fetch("/api/ai/narration", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId, topic: topic.trim(), duration, lang }),
+        body: JSON.stringify({ courseId, topic: topic.trim(), duration, lang, materialIds }),
         signal,
       });
       if (!slidesRes.ok) throw new Error(await extractError(slidesRes, "Slide generation failed"));
@@ -950,6 +955,13 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
 
           {/* ══ GENERATION SECTION ══ */}
           <div className="px-5 pt-5 pb-0">
+
+            {/* Source material picker (shared by all generators) */}
+            {phase === "idle" && !genVideo && (
+              <div className="max-w-2xl mb-2">
+                <SourcePicker courseId={courseId} color={color} onChange={setMaterialIds} />
+              </div>
+            )}
 
             {/* Error */}
             {errorMsg && (

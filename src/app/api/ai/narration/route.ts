@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { courseId, topic, duration = 10, weekIds, lang = "en" } = await req.json();
+    const { courseId, topic, duration = 10, weekIds, materialIds, lang = "en" } = await req.json();
     if (!courseId || !topic?.trim()) {
       return NextResponse.json({ error: "courseId and topic are required" }, { status: 400 });
     }
@@ -37,7 +37,11 @@ export async function POST(req: NextRequest) {
       "Course";
 
     const where: any = { courseId };
-    if (weekIds?.length) {
+    if (materialIds?.length) {
+      // Direct material ID filtering (from SourcePicker)
+      where.materialId = { in: materialIds };
+    } else if (weekIds?.length) {
+      // Legacy week-based filtering
       const matIds = await prisma.material.findMany({
         where: { courseId, weekId: { in: weekIds } },
         select: { id: true },

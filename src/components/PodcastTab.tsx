@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { t, type Lang } from "@/lib/i18n";
 import ThumbsRating from "@/components/ThumbsRating";
+import SourcePicker from "@/components/SourcePicker";
 
 interface Props {
   courseId: string;
@@ -27,6 +28,7 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
   const [phase, setPhase] = useState<"idle" | "script" | "audio">("idle");
   const [progress, setProgress] = useState("");
   const [elapsed, setElapsed] = useState(0);
+  const [podMaterialIds, setPodMaterialIds] = useState<string[]>([]);
 
   // Audio state
   const [audioSegments, setAudioSegments] = useState<AudioSegment[]>([]);
@@ -139,6 +141,7 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
           topic: useTopic || undefined,
           customContext: customContext || undefined,
           lang,
+          materialIds: podMaterialIds.length ? podMaterialIds : undefined,
         }),
         signal: controller.signal,
       });
@@ -575,8 +578,13 @@ export default function PodcastTab({ courseId, color, name, autoGenerate, custom
               <p className="font-serif text-lg text-muted-light">{T("pod.title")}</p>
               <p className="text-xs mt-2 max-w-md mx-auto leading-relaxed">{T("pod.desc")}</p>
 
+              {/* Source material picker */}
+              <div className="mt-4 max-w-lg mx-auto text-left">
+                <SourcePicker courseId={courseId} color={color} onChange={setPodMaterialIds} />
+              </div>
+
               {/* Topic selector */}
-              <div className="mt-6 max-w-lg mx-auto text-left">
+              <div className="mt-2 max-w-lg mx-auto text-left">
                 <p className="text-xs text-muted mb-2 text-center uppercase tracking-wider">{T("pod.topic")}</p>
                 <input
                   value={topic}
