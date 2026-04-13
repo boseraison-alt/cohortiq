@@ -742,7 +742,7 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
       // until url changes from "pending" to the real MP4 path.
       setRichStatus(`Rendering ${phase1.slideCount} slides (narration + video)… this takes 1–3 min`);
       const videoId = phase1.videoId;
-      const maxPollTime = 10 * 60 * 1000; // 10 min max
+      const maxPollTime = 20 * 60 * 1000; // 20 min max
       const pollInterval = 5000; // 5 seconds
       const pollStart = Date.now();
 
@@ -779,7 +779,7 @@ export default function VideosTab({ courseId, color, name, lang = "en" }: Props)
         }
       }
 
-      throw new Error("Rendering timed out after 10 minutes. Check your video library — it may still appear shortly.");
+      throw new Error("Rendering timed out after 20 minutes. Check your video library — it may still appear shortly.");
     } catch (e: any) {
       console.error("[rich-video client v3] error:", e);
       setRichError(e.message || "Failed to generate rich video");
